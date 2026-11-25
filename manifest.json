@@ -1,9 +1,9 @@
 {
   "id": "password-kanban",
   "name": "Password Kanban",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "minAppVersion": "1.5.0",
-  "description": "Encrypted Kanban-style password manager with searchable cards, custom fields, and password generation.",
+  "description": "EN: Encrypted Kanban password manager with masked passwords and a password generator. | RU: Зашифрованный менеджер паролей в стиле канбан с маскировкой паролей и генератором.",
   "author": "Yurden-MSKV",
   "authorUrl": "https://github.com/Yurden-MSKV",
   "isDesktopOnly": false
