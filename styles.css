@@ -1,0 +1,573 @@
+/* The view follows Obsidian/Kanban theme variables; no fixed light/dark palette. */
+.workspace-leaf-content[data-type="password-kanban-view"] .view-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.workspace-leaf-content[data-type="password-kanban-view"] > .view-header {
+  display: flex !important;
+}
+
+.vkp-view-container,
+.vkp-view-content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.vkp-view-content {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.vkp-kanban {
+  --lane-width: 272px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  font-family: var(--font-interface-override, var(--font-interface-theme, var(--font-interface, var(--font-default, var(--default-font, sans-serif)))));
+  font-size: var(--font-ui-medium, 1rem);
+  line-height: var(--line-height-normal, 1.5);
+  color: var(--text-normal);
+  background: var(--background-primary);
+}
+
+.vkp-kanban button,
+.vkp-kanban input,
+.vkp-kanban select,
+.vkp-kanban textarea,
+.vkp-shell button,
+.vkp-shell input,
+.vkp-shell select,
+.vkp-shell textarea {
+  font-family: inherit;
+}
+
+.vkp-toolbar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2, 8px);
+  padding-block: 10px;
+  padding-inline: 13px;
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.vkp-search {
+  flex: 1 1 260px;
+  min-width: 120px;
+  max-width: 520px;
+}
+
+.vkp-filter {
+  flex: 0 1 190px;
+  min-width: 120px;
+}
+
+.vkp-toolbar-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.vkp-toolbar .vkp-input {
+  width: auto;
+}
+
+.vkp-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.vkp-lane-wrapper {
+  display: flex;
+  flex: 0 0 var(--lane-width, 272px);
+  width: var(--lane-width, 272px);
+  height: 100%;
+  max-height: 100%;
+}
+
+.vkp-lane {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 120px;
+  max-height: 100%;
+  overflow: hidden;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  transition:
+    background-color 100ms ease,
+    border-color 100ms ease;
+}
+
+.vkp-lane.is-dropping {
+  background: hsla(var(--interactive-accent-hsl), 0.15);
+  border-color: var(--interactive-accent);
+  outline: 1px solid var(--interactive-accent);
+}
+
+.vkp-lane-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-1, 4px);
+  padding-block: 8px;
+  padding-inline: 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.vkp-lane-title {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--size-4-2, 8px);
+  min-width: 0;
+  font-size: var(--font-ui-small, 0.875rem);
+  font-weight: 600;
+}
+
+.vkp-lane-title-text {
+  overflow-wrap: anywhere;
+}
+
+.vkp-lane-count {
+  flex: 0 0 auto;
+  padding: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.vkp-lane-controls,
+.vkp-card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.vkp-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  color: var(--text-muted);
+}
+
+.vkp-icon-button svg,
+.vkp-copy svg {
+  width: var(--icon-size, 1em);
+  height: var(--icon-size, 1em);
+}
+
+.vkp-danger {
+  color: var(--text-error);
+}
+
+.vkp-lane-items {
+  flex: 1 1 auto;
+  min-height: 48px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.vkp-card {
+  margin-block-end: 8px;
+  overflow: hidden;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--input-radius, var(--radius-s));
+  transition:
+    opacity 300ms cubic-bezier(0.25, 1, 0.5, 1),
+    border-color 100ms ease,
+    box-shadow 100ms ease;
+}
+
+.vkp-card[draggable="true"] {
+  cursor: grab;
+}
+
+.vkp-card:active {
+  cursor: grabbing;
+}
+
+.vkp-card:hover {
+  border-color: var(--background-modifier-border-focus);
+  box-shadow: var(--shadow-s);
+}
+
+.vkp-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block: 6px;
+  padding-inline: 8px;
+  background: var(--background-primary);
+}
+
+.vkp-card-title {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  color: var(--text-normal);
+  font-family: inherit;
+  font-size: var(--font-ui-small, 0.875rem);
+  line-height: var(--line-height-tight, 1.3);
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.vkp-card-title:hover {
+  color: var(--text-accent);
+  background: transparent;
+}
+
+.vkp-card-actions {
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.vkp-card:hover .vkp-card-actions,
+.vkp-card:focus-within .vkp-card-actions {
+  opacity: 1;
+}
+
+.vkp-details {
+  padding-block: 6px;
+  padding-inline: 8px;
+  background: var(--background-primary-alt);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.vkp-detail-row {
+  display: grid;
+  grid-template-columns: minmax(58px, 0.65fr) minmax(70px, 1.5fr) 26px 26px;
+  align-items: start;
+  gap: 6px;
+  padding-block: 5px;
+}
+
+.vkp-detail-row + .vkp-detail-row {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.vkp-detail-label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 12px);
+  overflow-wrap: anywhere;
+}
+
+.vkp-detail-value {
+  min-width: 0;
+  color: var(--text-normal);
+  font-family: var(--font-text-override, var(--font-text-theme, var(--font-text, var(--font-default, inherit))));
+  font-size: var(--font-text-size, 0.875rem);
+  line-height: var(--line-height-normal, 1.5);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.vkp-copy,
+.vkp-reveal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  color: var(--text-muted);
+}
+
+.vkp-reveal-placeholder {
+  width: 26px;
+  height: 26px;
+}
+
+.vkp-copy:hover,
+.vkp-reveal:hover,
+.vkp-icon-button:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.vkp-lane-add {
+  flex: 0 0 auto;
+  padding: 4px 8px 8px;
+}
+
+.vkp-new-card-button {
+  width: 100%;
+  padding: 8px 10px;
+  color: var(--text-muted);
+  text-align: start;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.vkp-new-card-button:hover {
+  color: var(--text-on-accent, var(--text-normal));
+  background: var(--interactive-accent-hover);
+}
+
+.vkp-add-lane-wrapper {
+  height: auto;
+  min-height: 38px;
+}
+
+.vkp-add-lane {
+  height: auto;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 6px;
+}
+
+.vkp-add-lane:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.vkp-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  color: var(--text-normal);
+  text-align: center;
+  background: var(--background-primary);
+}
+
+.vkp-muted {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vkp-shell {
+  width: min(760px, 96vw);
+  max-height: 92vh;
+  font-family: var(--font-interface-override, var(--font-interface-theme, var(--font-interface, var(--font-default, var(--default-font, sans-serif)))));
+  font-size: var(--font-ui-medium, 1rem);
+  line-height: var(--line-height-normal, 1.5);
+}
+
+.vkp-shell .vkp-help-list,
+.vkp-shell .vkp-help-warning {
+  font-family: var(--font-text-override, var(--font-text-theme, var(--font-text, var(--font-default, inherit))));
+}
+
+.vkp-shell .modal-content {
+  overflow: auto;
+}
+
+.vkp-help-modal .modal-content {
+  max-height: 78vh;
+}
+
+.vkp-help-section {
+  margin-block: 1.25em;
+}
+
+.vkp-help-section h3 {
+  margin-block-end: 0.5em;
+}
+
+.vkp-help-list {
+  margin-block: 0;
+  padding-inline-start: 1.5em;
+}
+
+.vkp-help-list li + li {
+  margin-block-start: 0.5em;
+}
+
+.vkp-help-warning {
+  margin-block: 1.25em;
+  padding: 10px 12px;
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  border-inline-start: 3px solid var(--text-warning, var(--interactive-accent));
+  border-radius: var(--radius-s);
+}
+
+.vkp-toolbar-help {
+  flex: 0 0 auto;
+}
+
+.vkp-shell h2,
+.vkp-shell h3 {
+  margin-top: 0;
+}
+
+.vkp-error {
+  min-height: 1.4em;
+  margin: 8px 0;
+  color: var(--text-error);
+}
+
+.vkp-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 5px 0;
+}
+
+.vkp-card-title-input {
+  margin-block-end: 8px;
+}
+
+.vkp-editor-fields-heading {
+  margin-block: 4px 8px;
+}
+
+.vkp-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-block-start: 12px;
+}
+
+.vkp-editor-actions > button {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.vkp-editor-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.vkp-field-edit-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.8fr) minmax(140px, 1.4fr) 36px 112px 36px;
+  align-items: start;
+  gap: 10px;
+}
+
+.vkp-field-edit-row > .vkp-input {
+  min-width: 0;
+  min-height: 36px;
+  margin: 0;
+}
+
+.vkp-field-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.vkp-field-grip:active {
+  cursor: grabbing;
+}
+
+.vkp-field-grip svg {
+  width: var(--icon-size, 1em);
+  height: var(--icon-size, 1em);
+}
+
+.vkp-field-edit-row.is-dragging {
+  opacity: 0.55;
+}
+
+.vkp-field-edit-row.is-drop-target {
+  border-block-start: 2px solid var(--interactive-accent);
+}
+
+.vkp-field-edit-row .vkp-small {
+  min-width: 36px;
+  min-height: 36px;
+  padding-inline: 8px;
+  font-size: var(--font-ui-smaller, 0.75em);
+}
+
+.vkp-field-generate {
+  width: 112px;
+  min-width: 112px !important;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.vkp-field-generate.is-placeholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.vkp-field-value {
+  min-height: 36px;
+  resize: vertical;
+}
+
+@media (hover: none) {
+  .vkp-card-actions {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 750px) {
+  .vkp-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .vkp-search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .vkp-filter {
+    flex: 1 1 130px;
+  }
+
+  .vkp-columns {
+    padding-block-end: calc(1rem + var(--mobile-navbar-height, 0px));
+  }
+
+  .vkp-lane-wrapper {
+    flex-basis: min(82vw, 330px);
+    width: min(82vw, 330px);
+  }
+
+  .vkp-field-edit-row {
+    grid-template-columns: minmax(75px, 1fr) 36px 112px 36px;
+  }
+
+  .vkp-field-edit-row textarea {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .vkp-detail-row {
+    grid-template-columns: minmax(55px, 0.6fr) minmax(70px, 1.4fr) 26px 26px;
+  }
+}

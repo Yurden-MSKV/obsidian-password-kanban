@@ -1,0 +1,10 @@
+{
+  "id": "password-kanban",
+  "name": "Password Kanban",
+  "version": "0.2.16",
+  "minAppVersion": "1.5.0",
+  "description": "An encrypted, category-based password board for Obsidian.",
+  "author": "Yurden-MSKV",
+  "authorUrl": "https://github.com/Yurden-MSKV",
+  "isDesktopOnly": false
+}
