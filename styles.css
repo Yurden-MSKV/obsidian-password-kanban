@@ -5,7 +5,7 @@
 }
 
 .workspace-leaf-content[data-type="password-kanban-view"] > .view-header {
-  display: flex !important;
+  display: flex;
 }
 
 .vkp-view-container,
@@ -16,7 +16,6 @@
 }
 
 .vkp-view-content {
-  padding: 0 !important;
   overflow: hidden;
 }
 
@@ -514,7 +513,6 @@
 
 .vkp-field-generate {
   width: 112px;
-  min-width: 112px !important;
   justify-content: center;
   white-space: nowrap;
 }
