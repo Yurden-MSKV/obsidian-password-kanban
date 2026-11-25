@@ -201,11 +201,13 @@ class PasswordKanbanPlugin extends Plugin {
     });
 
     this.activityHandler = () => this.resetLockTimer();
+    this.activityEvents = ["pointerdown", "keydown", "input", "change", "wheel"];
+    for (const eventName of this.activityEvents) {
+      window.addEventListener(eventName, this.activityHandler, true);
+    }
     this.blurHandler = () => {
       if (this.db && this.key && !this.editingMode) this.lock(true);
     };
-    window.addEventListener("pointerdown", this.activityHandler, true);
-    window.addEventListener("keydown", this.activityHandler, true);
     window.addEventListener("blur", this.blurHandler);
 
     // Запрашиваем мастер-пароль при загрузке Obsidian.
@@ -213,8 +215,9 @@ class PasswordKanbanPlugin extends Plugin {
   }
 
   onunload() {
-    window.removeEventListener("pointerdown", this.activityHandler, true);
-    window.removeEventListener("keydown", this.activityHandler, true);
+    for (const eventName of this.activityEvents) {
+      window.removeEventListener(eventName, this.activityHandler, true);
+    }
     window.removeEventListener("blur", this.blurHandler);
     this.entryEditorModal?.close();
     this.conflictRecoveryModal?.close();
@@ -412,7 +415,16 @@ class PasswordKanbanPlugin extends Plugin {
   }
 
   resetLockTimer() {
-    if (!this.db || !this.key || this.editingMode) return;
+    if (!this.db || !this.key) return;
+    if (this.editingMode) {
+      window.clearTimeout(this.editingModeTimer);
+      this.editingModeTimer = window.setTimeout(() => {
+        this.editingMode = false;
+        this.editingModeTimer = null;
+        this.lock(true);
+      }, AUTO_LOCK_MS);
+      return;
+    }
     window.clearTimeout(this.lockTimer);
     this.lockTimer = window.setTimeout(() => this.lock(true), AUTO_LOCK_MS);
   }
@@ -436,16 +448,11 @@ class PasswordKanbanPlugin extends Plugin {
     this.editingMode = true;
     window.clearTimeout(this.lockTimer);
     this.lockTimer = null;
-    window.clearTimeout(this.editingModeTimer);
-    this.editingModeTimer = window.setTimeout(() => {
-      this.editingMode = false;
-      this.editingModeTimer = null;
-      this.lock(true);
-    }, AUTO_LOCK_MS);
+    this.resetLockTimer();
     this.boardView?.render();
     new Notice(t(
-      "Режим редактирования включён. Хранилище заблокируется через 5 минут.",
-      "Editing mode enabled. The vault will lock in 5 minutes.",
+      "Режим редактирования включён. Хранилище заблокируется через 5 минут бездействия.",
+      "Editing mode enabled. The vault will lock after 5 minutes of inactivity.",
     ));
   }
 
@@ -907,7 +914,7 @@ class HelpModal extends Modal {
     ]);
     addSection(t("Копирование и блокировка", "Clipboard and locking"), [
       t("После копирования плагин через 2 минуты попытается очистить буфер, но только если там осталось то же значение. Если доступ к буферу запрещён, значение изменилось или Obsidian закрыт, очистка не выполняется.", "Two minutes after copying, the plugin tries to clear the clipboard only if the copied value is still there. It leaves the clipboard untouched if access is denied or its contents changed; the timer does not run after Obsidian closes."),
-      t("Хранилище блокируется при потере фокуса Obsidian или после 5 минут бездействия. В режиме редактирования эти блокировки временно отключены; вместо них хранилище блокируется ровно через 5 минут с момента включения режима, даже если вы продолжаете работать. При блокировке открытая карточка скрывается; несохранённые изменения редактора теряются.", "The vault locks when Obsidian loses focus or after 5 minutes of inactivity. Editing mode temporarily disables both locks; instead, the vault locks exactly 5 minutes after the mode is enabled, even if you remain active. The open card is hidden; unsaved editor changes are discarded."),
+      t("Хранилище блокируется при потере фокуса Obsidian или после 5 минут бездействия. В режиме редактирования блокировка при потере фокуса отключена, а таймер на 5 минут обновляется при действиях в Obsidian; если действий нет, хранилище блокируется. При блокировке открытая карточка скрывается; несохранённые изменения редактора теряются.", "The vault locks when Obsidian loses focus or after 5 minutes of inactivity. Editing mode disables focus-loss locking; its 5-minute timer resets whenever you interact with Obsidian and locks the vault after 5 minutes without activity. The open card is hidden; unsaved editor changes are discarded."),
       t("Мастер-пароль запрашивается при запуске Obsidian и нигде не сохраняется.", "The master password is requested when Obsidian starts and is never stored."),
     ]);
     addSection(t("Хранение и синхронизация", "Storage and sync"), [

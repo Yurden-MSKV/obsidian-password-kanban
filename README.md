@@ -12,7 +12,7 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 - Expand cards inline; add, rename, and reorder custom fields per card.
 - Search, a password generator, and one-click field copying.
 - Password fields are masked by default and can be revealed on demand.
-- The vault locks when Obsidian loses focus or after five minutes of inactivity. Temporary Editing mode disables both locks and locks the vault exactly five minutes after it is enabled.
+- The vault locks when Obsidian loses focus or after five minutes of inactivity. Temporary Editing mode disables focus-loss locking and resets its five-minute lock timer whenever you interact with Obsidian.
 - Clipboard contents are cleared after two minutes when the copied value is still present.
 
 ## Installation
@@ -45,7 +45,7 @@ Import, export, automatic backups, and master-password changes are not included 
 - Просмотр карточек без открытия отдельного окна; добавление, переименование и сортировка полей.
 - Поиск, генератор паролей и копирование значений полей.
 - Пароли скрыты по умолчанию и отображаются по запросу.
-- Хранилище блокируется при потере фокуса Obsidian или после пяти минут бездействия. Временный режим редактирования отключает обе блокировки и блокирует хранилище ровно через пять минут после включения.
+- Хранилище блокируется при потере фокуса Obsidian или после пяти минут бездействия. Временный режим редактирования отключает блокировку при потере фокуса и обновляет таймер блокировки на пять минут при каждом действии в Obsidian.
 - Через две минуты плагин очищает буфер обмена, если скопированное значение всё ещё находится в нём.
 
 ### Установка
