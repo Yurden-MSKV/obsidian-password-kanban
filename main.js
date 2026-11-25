@@ -171,6 +171,8 @@ class PasswordKanbanPlugin extends Plugin {
     this.entryEditorModal = null;
     this.conflictRecoveryModal = null;
     this.lockTimer = null;
+    this.editingModeTimer = null;
+    this.editingMode = false;
     this.clipboardTimer = null;
     this.clipboardSequence = 0;
     this.saveQueue = Promise.resolve();
@@ -200,7 +202,7 @@ class PasswordKanbanPlugin extends Plugin {
 
     this.activityHandler = () => this.resetLockTimer();
     this.blurHandler = () => {
-      if (this.db && this.key) this.lock(true);
+      if (this.db && this.key && !this.editingMode) this.lock(true);
     };
     window.addEventListener("pointerdown", this.activityHandler, true);
     window.addEventListener("keydown", this.activityHandler, true);
@@ -217,12 +219,14 @@ class PasswordKanbanPlugin extends Plugin {
     this.entryEditorModal?.close();
     this.conflictRecoveryModal?.close();
     window.clearTimeout(this.lockTimer);
+    window.clearTimeout(this.editingModeTimer);
     window.clearTimeout(this.clipboardTimer);
     this.clipboardSequence++;
     this.boardView = null;
     this.db = null;
     this.key = null;
     this.salt = null;
+    this.editingMode = false;
   }
 
   async copyToClipboard(value, label) {
@@ -408,13 +412,48 @@ class PasswordKanbanPlugin extends Plugin {
   }
 
   resetLockTimer() {
-    if (!this.db || !this.key) return;
+    if (!this.db || !this.key || this.editingMode) return;
     window.clearTimeout(this.lockTimer);
     this.lockTimer = window.setTimeout(() => this.lock(true), AUTO_LOCK_MS);
   }
 
+  toggleEditingMode() {
+    if (!this.db || !this.key) return;
+
+    if (this.editingMode) {
+      this.editingMode = false;
+      window.clearTimeout(this.editingModeTimer);
+      this.editingModeTimer = null;
+      this.resetLockTimer();
+      this.boardView?.render();
+      new Notice(t(
+        "Обычный режим включён. Блокировка при потере фокуса активна.",
+        "Normal mode enabled. Locking on focus loss is active.",
+      ));
+      return;
+    }
+
+    this.editingMode = true;
+    window.clearTimeout(this.lockTimer);
+    this.lockTimer = null;
+    window.clearTimeout(this.editingModeTimer);
+    this.editingModeTimer = window.setTimeout(() => {
+      this.editingMode = false;
+      this.editingModeTimer = null;
+      this.lock(true);
+    }, AUTO_LOCK_MS);
+    this.boardView?.render();
+    new Notice(t(
+      "Режим редактирования включён. Хранилище заблокируется через 5 минут.",
+      "Editing mode enabled. The vault will lock in 5 minutes.",
+    ));
+  }
+
   lock(showNotice) {
     window.clearTimeout(this.lockTimer);
+    window.clearTimeout(this.editingModeTimer);
+    this.editingModeTimer = null;
+    this.editingMode = false;
     const hadUnsavedEditor = Boolean(this.entryEditorModal);
     this.db = null;
     this.key = null;
@@ -868,7 +907,7 @@ class HelpModal extends Modal {
     ]);
     addSection(t("Копирование и блокировка", "Clipboard and locking"), [
       t("После копирования плагин через 2 минуты попытается очистить буфер, но только если там осталось то же значение. Если доступ к буферу запрещён, значение изменилось или Obsidian закрыт, очистка не выполняется.", "Two minutes after copying, the plugin tries to clear the clipboard only if the copied value is still there. It leaves the clipboard untouched if access is denied or its contents changed; the timer does not run after Obsidian closes."),
-      t("Хранилище блокируется сразу, когда Obsidian теряет фокус, или после 5 минут бездействия. При блокировке открытая карточка скрывается; несохранённые изменения редактора теряются.", "The vault locks as soon as Obsidian loses focus, or after 5 minutes of inactivity. The open card is hidden; unsaved editor changes are discarded."),
+      t("Хранилище блокируется при потере фокуса Obsidian или после 5 минут бездействия. В режиме редактирования эти блокировки временно отключены; вместо них хранилище блокируется ровно через 5 минут с момента включения режима, даже если вы продолжаете работать. При блокировке открытая карточка скрывается; несохранённые изменения редактора теряются.", "The vault locks when Obsidian loses focus or after 5 minutes of inactivity. Editing mode temporarily disables both locks; instead, the vault locks exactly 5 minutes after the mode is enabled, even if you remain active. The open card is hidden; unsaved editor changes are discarded."),
       t("Мастер-пароль запрашивается при запуске Obsidian и нигде не сохраняется.", "The master password is requested when Obsidian starts and is never stored."),
     ]);
     addSection(t("Хранение и синхронизация", "Storage and sync"), [
@@ -964,8 +1003,14 @@ class PasswordBoardView extends ItemView {
     toolbar.append(search, filter);
     makeButton(toolbar, t("+ Категория", "+ Category"), () => this.addCategory(), "vkp-toolbar-button mod-cta");
     makeButton(toolbar, t("Восстановить копию", "Restore copy"), () => this.plugin.openConflictRecovery(), "vkp-toolbar-button");
-    makeIconButton(toolbar, "circle-help", t("Справка Password Kanban", "Password Kanban help"), () => this.plugin.openHelp(), "vkp-toolbar-help");
+    makeButton(
+      toolbar,
+      this.plugin.editingMode ? t("Обычный режим", "Normal mode") : t("Режим редактирования", "Editing mode"),
+      () => this.plugin.toggleEditingMode(),
+      "vkp-toolbar-button",
+    );
     makeButton(toolbar, t("Заблокировать", "Lock"), () => this.plugin.lock(true), "vkp-toolbar-button");
+    makeIconButton(toolbar, "circle-help", t("Справка Password Kanban", "Password Kanban help"), () => this.plugin.openHelp(), "vkp-toolbar-help");
     board.appendChild(toolbar);
     this.columnsEl = makeEl("div", "vkp-columns");
     board.appendChild(this.columnsEl);

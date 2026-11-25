@@ -8,7 +8,7 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 - Expand cards inline; add, rename, and reorder custom fields per card.
 - Search, a password generator, and one-click field copying.
 - Password fields are masked by default and can be revealed on demand.
-- The vault locks when Obsidian loses focus or after five minutes of inactivity.
+- The vault locks when Obsidian loses focus or after five minutes of inactivity. Temporary Editing mode disables both locks and locks the vault exactly five minutes after it is enabled.
 - Clipboard contents are cleared after two minutes when the copied value is still present.
 
 ## Installation
