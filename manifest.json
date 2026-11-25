@@ -1,9 +1,9 @@
 {
   "id": "password-kanban",
   "name": "Password Kanban",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "minAppVersion": "1.5.0",
-  "description": "An encrypted, category-based password board for Obsidian.",
+  "description": "Encrypted Kanban-style password manager with searchable cards, custom fields, and password generation.",
   "author": "Yurden-MSKV",
   "authorUrl": "https://github.com/Yurden-MSKV",
   "isDesktopOnly": false
