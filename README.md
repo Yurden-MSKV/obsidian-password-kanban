@@ -8,7 +8,7 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 
 ## Features
 
-- Kanban columns for categories and draggable account cards.
+- Drag cards to reorder them within a column or move them between categories.
 - Expand cards inline; add, rename, and reorder custom fields per card.
 - Search, a password generator, and one-click field copying.
 - Password fields are masked by default and can be revealed on demand.
@@ -41,7 +41,7 @@ Import, export, automatic backups, and master-password changes are not included 
 
 ### Возможности
 
-- Канбан-колонки для категорий и карточки аккаунтов, которые можно перетаскивать.
+- Перетаскивайте карточки, чтобы менять их порядок в колонке или перемещать между категориями.
 - Просмотр карточек без открытия отдельного окна; добавление, переименование и сортировка полей.
 - Поиск, генератор паролей и копирование значений полей.
 - Пароли скрыты по умолчанию и отображаются по запросу.

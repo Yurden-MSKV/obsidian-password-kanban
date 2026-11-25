@@ -210,6 +210,11 @@
   box-shadow: var(--shadow-s);
 }
 
+.vkp-card.is-drop-target {
+  border-color: var(--interactive-accent);
+  outline: 1px solid var(--interactive-accent);
+}
+
 .vkp-card-heading {
   display: flex;
   align-items: flex-start;

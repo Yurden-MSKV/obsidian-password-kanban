@@ -903,7 +903,7 @@ class HelpModal extends Modal {
 
     addSection(t("Доска и карточки", "Board and cards"), [
       t("Добавляйте аккаунты в нужную колонку. Карточка раскрывается нажатием на её название.", "Add accounts to the appropriate column. Click a card title to expand it."),
-      t("Переносите карточки в другую категорию перетаскиванием по доске. Порядок полей меняется за ручку в редакторе.", "Drag cards between categories. Reorder fields by dragging their handle in the editor."),
+      t("Перетаскивайте карточки внутри колонки, чтобы изменить порядок, или в другую колонку, чтобы сменить категорию. Порядок полей меняется за ручку в редакторе.", "Drag cards within a column to reorder them or to another column to change their category. Reorder fields by dragging their handle in the editor."),
       t("Поиск работает по названию карточки и значениям полей, пока хранилище разблокировано.", "Search matches card titles and field values while the vault is unlocked."),
     ]);
     addSection(t("Поля и генератор", "Fields and generator"), [
@@ -970,7 +970,10 @@ class PasswordBoardView extends ItemView {
 
   async commitAndRender() {
     const saved = await this.plugin.saveAndNotify();
-    if (saved && this.plugin.db) this.render();
+    if (saved && this.plugin.db) {
+      if (this.columnsEl?.isConnected) this.renderColumns();
+      else this.render();
+    }
   }
 
   render() {
@@ -1027,6 +1030,12 @@ class PasswordBoardView extends ItemView {
 
   renderColumns() {
     if (!this.columnsEl || !this.plugin.db) return;
+    const columnsScrollLeft = this.columnsEl.scrollLeft;
+    const laneScrollTops = new Map();
+    for (const lane of this.columnsEl.querySelectorAll(".vkp-lane")) {
+      const items = lane.querySelector(".vkp-lane-items");
+      if (items) laneScrollTops.set(lane.dataset.categoryId, items.scrollTop);
+    }
     this.columnsEl.replaceChildren();
     const categories = this.plugin.db.categories.filter((item) => !this.categoryFilter || item.id === this.categoryFilter);
     for (const category of categories) {
@@ -1061,16 +1070,22 @@ class PasswordBoardView extends ItemView {
       });
       column.addEventListener("drop", async (event) => {
         event.preventDefault();
+        event.stopPropagation();
         column.classList.remove("is-dropping");
         const entryId = event.dataTransfer?.getData("text/plain");
-        const entry = this.plugin.db.entries.find((item) => item.id === entryId);
-        if (entry && entry.categoryId !== category.id) {
-          entry.categoryId = category.id;
-          entry.updatedAt = Date.now();
-          await this.commitAndRender();
-        }
+        if (entryId) await this.moveEntryToDropPosition(entryId, category.id);
       });
       const items = makeEl("div", "vkp-lane-items");
+      items.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      });
+      items.addEventListener("drop", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const entryId = event.dataTransfer?.getData("text/plain");
+        if (entryId) await this.moveEntryToDropPosition(entryId, category.id);
+      });
       for (const entry of entries) items.appendChild(this.renderEntry(entry));
       column.appendChild(items);
       const add = makeEl("div", "vkp-lane-add");
@@ -1085,12 +1100,42 @@ class PasswordBoardView extends ItemView {
     const addLaneButton = makeButton(addLane, t("+ Добавить категорию", "+ Add category"), () => this.addCategory(), "vkp-new-card-button");
     addLaneButton.classList.add("vkp-add-lane");
     this.columnsEl.appendChild(addLane);
+
+    this.columnsEl.scrollLeft = columnsScrollLeft;
+    for (const lane of this.columnsEl.querySelectorAll(".vkp-lane")) {
+      const items = lane.querySelector(".vkp-lane-items");
+      const scrollTop = laneScrollTops.get(lane.dataset.categoryId);
+      if (items && scrollTop !== undefined) items.scrollTop = scrollTop;
+    }
   }
 
   renderEntry(entry) {
     const card = makeEl("article", `vkp-card${this.expandedEntryId === entry.id ? " is-expanded" : ""}`);
     card.draggable = true;
-    card.addEventListener("dragstart", (event) => event.dataTransfer?.setData("text/plain", entry.id));
+    card.addEventListener("dragstart", (event) => {
+      if (!event.dataTransfer) return;
+      event.dataTransfer.setData("text/plain", entry.id);
+      event.dataTransfer.effectAllowed = "move";
+    });
+    card.addEventListener("dragenter", () => card.classList.add("is-drop-target"));
+    card.addEventListener("dragleave", (event) => {
+      if (!card.contains(event.relatedTarget)) card.classList.remove("is-drop-target");
+    });
+    card.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    });
+    card.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      card.classList.remove("is-drop-target");
+      const draggedEntryId = event.dataTransfer?.getData("text/plain");
+      if (!draggedEntryId || draggedEntryId === entry.id) return;
+      const bounds = card.getBoundingClientRect();
+      const insertAfter = event.clientY >= bounds.top + bounds.height / 2;
+      await this.moveEntryToDropPosition(draggedEntryId, entry.categoryId, entry.id, insertAfter);
+    });
+    card.addEventListener("dragend", () => card.classList.remove("is-drop-target"));
     const heading = makeEl("div", "vkp-card-heading");
     const name = makeEl("button", "vkp-card-title", entry.title);
     name.addEventListener("click", () => {
@@ -1135,6 +1180,50 @@ class PasswordBoardView extends ItemView {
       card.appendChild(details);
     }
     return card;
+  }
+
+  async moveEntryToDropPosition(entryId, categoryId, targetEntryId = null, insertAfter = false) {
+    const entries = this.plugin.db?.entries;
+    if (!entries) return;
+    const draggedEntry = entries.find((item) => item.id === entryId);
+    const targetEntry = targetEntryId
+      ? entries.find((item) => item.id === targetEntryId)
+      : null;
+    if (!draggedEntry || (targetEntryId && !targetEntry) || draggedEntry === targetEntry) return;
+
+    const destinationCategoryId = targetEntry?.categoryId ?? categoryId;
+    const destinationEntries = entries.filter(
+      (item) => item.categoryId === destinationCategoryId && item.id !== draggedEntry.id,
+    );
+    if (targetEntry) {
+      const targetIndex = destinationEntries.findIndex((item) => item.id === targetEntry.id);
+      if (targetIndex < 0) return;
+      destinationEntries.splice(targetIndex + (insertAfter ? 1 : 0), 0, draggedEntry);
+    } else {
+      destinationEntries.push(draggedEntry);
+    }
+
+    const oldDestinationOrder = entries
+      .filter((item) => item.categoryId === destinationCategoryId)
+      .map((item) => item.id);
+    const newDestinationOrder = destinationEntries.map((item) => item.id);
+    if (
+      draggedEntry.categoryId === destinationCategoryId &&
+      oldDestinationOrder.length === newDestinationOrder.length &&
+      oldDestinationOrder.every((id, index) => id === newDestinationOrder[index])
+    ) {
+      return;
+    }
+
+    draggedEntry.categoryId = destinationCategoryId;
+    draggedEntry.updatedAt = Date.now();
+    let nextDestinationIndex = 0;
+    this.plugin.db.entries = entries.map((item) => (
+      item.categoryId === destinationCategoryId
+        ? destinationEntries[nextDestinationIndex++]
+        : item
+    ));
+    await this.commitAndRender();
   }
 
   async addCategory() {
