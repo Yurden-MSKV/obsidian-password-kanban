@@ -139,6 +139,8 @@
 }
 
 .vkp-lane-title-text {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -576,7 +578,7 @@
 .vkp-field-edit-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(100px, 0.8fr) minmax(140px, 1.4fr) 36px 112px 36px;
+  grid-template-columns: 36px minmax(100px, 0.8fr) minmax(140px, 1.4fr) 112px 36px;
   align-items: start;
   gap: 10px;
 }
@@ -662,7 +664,7 @@
   }
 
   .vkp-field-edit-row {
-    grid-template-columns: minmax(75px, 1fr) 36px 112px 36px;
+    grid-template-columns: 36px minmax(75px, 1fr) 112px 36px;
   }
 
   .vkp-field-edit-row textarea {

@@ -1472,7 +1472,7 @@ var EntryEditorModal = class extends Modal {
     remove.addEventListener("click", () => {
       row.remove();
     });
-    row.append(label, value, grip, generate, remove);
+    row.append(grip, label, value, generate, remove);
     container.appendChild(row);
   }
   onOpen() {
@@ -1765,7 +1765,11 @@ var PasswordBoardView = class extends ItemView {
       ghostClass: "vkp-lane-sort-ghost",
       chosenClass: "vkp-sort-chosen",
       dragClass: "vkp-sort-drag",
-      onEnd: () => this.persistCategoryOrder()
+      onMove: (event) => event.related?.parentElement === this.columnsEl,
+      onEnd: () => {
+        this.normalizeColumnOrder();
+        this.persistCategoryOrder();
+      }
     });
   }
   renderGate() {
@@ -1866,16 +1870,16 @@ var PasswordBoardView = class extends ItemView {
         return haystack.includes(this.query.toLocaleLowerCase());
       });
       const count = makeEl("span", "vkp-lane-count", String(entries.length));
-      titleWrap.append(title, count);
-      const controls = makeEl("div", "vkp-lane-controls");
-      const grip = makeIconButton(
-        controls,
+      makeIconButton(
+        titleWrap,
         "grip-vertical",
         t("\u041F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E", "Drag category"),
         () => {
         },
         "vkp-icon-button vkp-lane-grip"
       );
+      titleWrap.append(title, count);
+      const controls = makeEl("div", "vkp-lane-controls");
       makeIconButton(controls, "pencil", t("\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E", "Rename category"), () => this.renameCategory(category), "vkp-icon-button");
       makeIconButton(controls, "trash-2", t("\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E", "Delete category"), () => this.deleteCategory(category), "vkp-icon-button vkp-danger");
       header.append(titleWrap, controls);
@@ -1993,6 +1997,13 @@ var PasswordBoardView = class extends ItemView {
     if (nextCategories.every((item, index) => item.id === previousCategories[index].id)) return;
     this.plugin.db.categories = nextCategories;
     void this.plugin.saveAndNotify();
+  }
+  normalizeColumnOrder() {
+    if (!this.columnsEl) return;
+    const addLane = this.columnsEl.querySelector(".vkp-add-lane-wrapper");
+    for (const wrapper of this.columnsEl.querySelectorAll(".vkp-lane-wrapper[data-category-id]")) {
+      this.columnsEl.insertBefore(wrapper, addLane);
+    }
   }
   renderEntry(entry) {
     const card = makeEl("article", `vkp-card${this.expandedEntryId === entry.id ? " is-expanded" : ""}`);

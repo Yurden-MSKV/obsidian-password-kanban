@@ -648,7 +648,7 @@ class EntryEditorModal extends Modal {
     remove.addEventListener("click", () => {
       row.remove();
     });
-    row.append(label, value, grip, generate, remove);
+    row.append(grip, label, value, generate, remove);
     container.appendChild(row);
   }
 
@@ -970,7 +970,11 @@ class PasswordBoardView extends ItemView {
       ghostClass: "vkp-lane-sort-ghost",
       chosenClass: "vkp-sort-chosen",
       dragClass: "vkp-sort-drag",
-      onEnd: () => this.persistCategoryOrder(),
+      onMove: (event) => event.related?.parentElement === this.columnsEl,
+      onEnd: () => {
+        this.normalizeColumnOrder();
+        this.persistCategoryOrder();
+      },
     });
   }
 
@@ -1085,15 +1089,15 @@ class PasswordBoardView extends ItemView {
         return haystack.includes(this.query.toLocaleLowerCase());
       });
       const count = makeEl("span", "vkp-lane-count", String(entries.length));
-      titleWrap.append(title, count);
-      const controls = makeEl("div", "vkp-lane-controls");
-      const grip = makeIconButton(
-        controls,
+      makeIconButton(
+        titleWrap,
         "grip-vertical",
         t("Перетащить категорию", "Drag category"),
         () => {},
         "vkp-icon-button vkp-lane-grip",
       );
+      titleWrap.append(title, count);
+      const controls = makeEl("div", "vkp-lane-controls");
       makeIconButton(controls, "pencil", t("Переименовать категорию", "Rename category"), () => this.renameCategory(category), "vkp-icon-button");
       makeIconButton(controls, "trash-2", t("Удалить категорию", "Delete category"), () => this.deleteCategory(category), "vkp-icon-button vkp-danger");
       header.append(titleWrap, controls);
@@ -1233,6 +1237,14 @@ class PasswordBoardView extends ItemView {
 
     this.plugin.db.categories = nextCategories;
     void this.plugin.saveAndNotify();
+  }
+
+  normalizeColumnOrder() {
+    if (!this.columnsEl) return;
+    const addLane = this.columnsEl.querySelector(".vkp-add-lane-wrapper");
+    for (const wrapper of this.columnsEl.querySelectorAll(".vkp-lane-wrapper[data-category-id]")) {
+      this.columnsEl.insertBefore(wrapper, addLane);
+    }
   }
 
   renderEntry(entry) {
