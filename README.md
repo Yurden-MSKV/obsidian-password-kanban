@@ -12,7 +12,7 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 - Drag a column's grip to reorder columns; drag field grips in the editor to reorder fields.
 - Expand cards inline; add and rename custom fields per card.
 - Search, one-click field copying, and a password generator available when a field name contains “password” or “пароль” (case-insensitive).
-- Password fields are masked by default and can be revealed on demand.
+- Fields whose names contain “password” or “пароль” are masked by default and can be revealed on demand (case-insensitive).
 - The vault locks when Obsidian loses focus or after five minutes of inactivity. Temporary Editing mode disables focus-loss locking and resets its five-minute lock timer whenever you interact with Obsidian.
 - Copied values remain on the clipboard until replaced or cleared manually.
 - The manager page stays closed at vault startup and opens from the left ribbon icon. When locked, enter the master password directly on the page.
@@ -49,7 +49,7 @@ Requires Node.js and npm. Run `npm ci` followed by `npm run build`. SortableJS 1
 - Перетаскивайте колонку за ручку в её заголовке, чтобы менять порядок колонок; в редакторе перетаскивайте поля за ручки.
 - Просмотр карточек без открытия отдельного окна; добавление и переименование полей.
 - Поиск, копирование значений полей и генератор, доступный для названий, содержащих «пароль» или «password» (без учёта регистра).
-- Пароли скрыты по умолчанию и отображаются по запросу.
+- Поля, названия которых содержат «пароль» или «password», скрыты по умолчанию и отображаются по запросу (без учёта регистра).
 - Хранилище блокируется при потере фокуса Obsidian или после пяти минут бездействия. Временный режим редактирования отключает блокировку при потере фокуса и обновляет таймер блокировки на пять минут при каждом действии в Obsidian.
 - Скопированные значения остаются в буфере обмена, пока вы не замените или не очистите их вручную.
 - При запуске vault страница менеджера закрыта. Откройте её значком Password Kanban на левой панели; если хранилище заблокировано, введите мастер-пароль прямо на странице.

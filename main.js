@@ -1022,7 +1022,8 @@ function generatePassword() {
   return chars.join("");
 }
 function isPasswordField(field) {
-  return /^(пароль|password)$/i.test(field.label.trim());
+  const fieldName = field.label.trim().toLocaleLowerCase();
+  return fieldName.includes("\u043F\u0430\u0440\u043E\u043B\u044C") || fieldName.includes("password");
 }
 var PasswordKanbanPlugin = class extends Plugin {
   async onload() {
@@ -1605,7 +1606,7 @@ var HelpModal = class extends Modal {
     addSection(t("\u041F\u043E\u043B\u044F \u0438 \u0433\u0435\u043D\u0435\u0440\u0430\u0442\u043E\u0440", "Fields and generator"), [
       t("\u0412 \u043D\u043E\u0432\u044B\u0445 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0430\u0445 \u043F\u043E\u043B\u0435 \xAB\u0421\u0430\u0439\u0442\xBB \u0438\u0434\u0451\u0442 \u043F\u0435\u0440\u0432\u044B\u043C. \u041F\u043E\u043B\u044F \u043C\u043E\u0436\u043D\u043E \u0434\u043E\u0431\u0430\u0432\u043B\u044F\u0442\u044C, \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u044B\u0432\u0430\u0442\u044C \u0438 \u043C\u0435\u043D\u044F\u0442\u044C \u0438\u0445 \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E \u0432 \u043A\u0430\u0436\u0434\u043E\u0439 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0435.", "New cards start with the Website field. Add, rename, and reorder fields independently in each card."),
       t("\u041A\u043D\u043E\u043F\u043A\u0430 \u0433\u0435\u043D\u0435\u0440\u0430\u0442\u043E\u0440\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430, \u0435\u0441\u043B\u0438 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043F\u043E\u043B\u044F \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 \xAB\u043F\u0430\u0440\u043E\u043B\u044C\xBB \u0438\u043B\u0438 \xABpassword\xBB (\u0431\u0435\u0437 \u0443\u0447\u0451\u0442\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430). \u0413\u0435\u043D\u0435\u0440\u0430\u0442\u043E\u0440 \u0441\u043E\u0437\u0434\u0430\u0451\u0442 11\u201315 \u043B\u0430\u0442\u0438\u043D\u0441\u043A\u0438\u0445 \u0431\u0443\u043A\u0432 \u0438 \u0446\u0438\u0444\u0440 \u0431\u0435\u0437 \u0440\u0430\u0441\u043F\u0440\u043E\u0441\u0442\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0445 \u0432\u0438\u0437\u0443\u0430\u043B\u044C\u043D\u043E \u043F\u043E\u0445\u043E\u0436\u0438\u0445 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432.", "The generator button is available when a field name contains \u201Cpassword\u201D or \u201C\u043F\u0430\u0440\u043E\u043B\u044C\u201D, regardless of case. It creates 11\u201315 Latin letters and digits, excluding commonly confused characters."),
-      t("\u041F\u043E\u043B\u0435 \xAB\u041F\u0430\u0440\u043E\u043B\u044C\xBB \u0441\u043A\u0440\u044B\u0442\u043E \u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E. \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0437\u043D\u0430\u0447\u043E\u043A \u0433\u043B\u0430\u0437\u0430, \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0435\u0433\u043E; \u043F\u0440\u0438 \u0441\u0432\u043E\u0440\u0430\u0447\u0438\u0432\u0430\u043D\u0438\u0438 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043F\u0430\u0440\u043E\u043B\u044C \u0441\u043D\u043E\u0432\u0430 \u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F.", "Password fields are hidden by default. Use the eye icon to reveal one; collapsing the card hides it again."),
+      t("\u041F\u043E\u043B\u044F, \u0432 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0438 \u043A\u043E\u0442\u043E\u0440\u044B\u0445 \u0435\u0441\u0442\u044C \xAB\u043F\u0430\u0440\u043E\u043B\u044C\xBB \u0438\u043B\u0438 \xABpassword\xBB (\u0431\u0435\u0437 \u0443\u0447\u0451\u0442\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430), \u0441\u043A\u0440\u044B\u0442\u044B \u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E. \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0437\u043D\u0430\u0447\u043E\u043A \u0433\u043B\u0430\u0437\u0430, \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435; \u043F\u0440\u0438 \u0441\u0432\u043E\u0440\u0430\u0447\u0438\u0432\u0430\u043D\u0438\u0438 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043E\u043D\u043E \u0441\u043D\u043E\u0432\u0430 \u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F.", "Fields whose names contain \u201Cpassword\u201D or \u201C\u043F\u0430\u0440\u043E\u043B\u044C\u201D, regardless of case, are hidden by default. Use the eye icon to reveal a value; collapsing the card hides it again."),
       t("Enter \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443; Tab \u0438 Shift+Tab \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0430\u044E\u0442\u0441\u044F \u043F\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F\u043C, \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0430\u044F \u043A\u043D\u043E\u043F\u043A\u0438 \u0438 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F \u043F\u043E\u043B\u0435\u0439. Shift+Enter \u0432\u0441\u0442\u0430\u0432\u043B\u044F\u0435\u0442 \u043D\u043E\u0432\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443.", "Enter saves the card. Tab and Shift+Tab move between values, skipping buttons and field names. Shift+Enter inserts a new line.")
     ]);
     addSection(t("\u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u043A\u0430", "Clipboard and locking"), [
@@ -1670,6 +1671,15 @@ var PasswordBoardView = class extends ItemView {
     }
   }
   render() {
+    const previousColumnsEl = this.columnsEl;
+    const columnsScrollLeft = previousColumnsEl?.isConnected ? previousColumnsEl.scrollLeft : 0;
+    const laneScrollTops = /* @__PURE__ */ new Map();
+    if (previousColumnsEl?.isConnected) {
+      for (const lane of previousColumnsEl.querySelectorAll(".vkp-lane")) {
+        const items = lane.querySelector(".vkp-lane-items");
+        if (items) laneScrollTops.set(lane.dataset.categoryId, items.scrollTop);
+      }
+    }
     this.columnSortable?.destroy();
     this.columnSortable = null;
     this.destroyCardSortables();
@@ -1731,6 +1741,12 @@ var PasswordBoardView = class extends ItemView {
     board.appendChild(this.columnsEl);
     this.contentEl.appendChild(board);
     this.renderColumns();
+    this.columnsEl.scrollLeft = columnsScrollLeft;
+    for (const lane of this.columnsEl.querySelectorAll(".vkp-lane")) {
+      const scrollTop = laneScrollTops.get(lane.dataset.categoryId);
+      const items = lane.querySelector(".vkp-lane-items");
+      if (items && scrollTop !== void 0) items.scrollTop = scrollTop;
+    }
     this.columnSortable = Sortable.create(this.columnsEl, {
       animation: 220,
       draggable: ".vkp-lane-wrapper[data-category-id]",

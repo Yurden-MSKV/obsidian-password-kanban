@@ -158,7 +158,8 @@ function generatePassword() {
 }
 
 function isPasswordField(field) {
-  return /^(пароль|password)$/i.test(field.label.trim());
+  const fieldName = field.label.trim().toLocaleLowerCase();
+  return fieldName.includes("пароль") || fieldName.includes("password");
 }
 
 class PasswordKanbanPlugin extends Plugin {
@@ -799,7 +800,7 @@ class HelpModal extends Modal {
     addSection(t("Поля и генератор", "Fields and generator"), [
       t("В новых карточках поле «Сайт» идёт первым. Поля можно добавлять, переименовывать и менять их порядок отдельно в каждой карточке.", "New cards start with the Website field. Add, rename, and reorder fields independently in each card."),
       t("Кнопка генератора доступна, если название поля содержит «пароль» или «password» (без учёта регистра). Генератор создаёт 11–15 латинских букв и цифр без распространённых визуально похожих символов.", "The generator button is available when a field name contains “password” or “пароль”, regardless of case. It creates 11–15 Latin letters and digits, excluding commonly confused characters."),
-      t("Поле «Пароль» скрыто по умолчанию. Нажмите на значок глаза, чтобы показать его; при сворачивании карточки пароль снова скрывается.", "Password fields are hidden by default. Use the eye icon to reveal one; collapsing the card hides it again."),
+      t("Поля, в названии которых есть «пароль» или «password» (без учёта регистра), скрыты по умолчанию. Нажмите на значок глаза, чтобы показать значение; при сворачивании карточки оно снова скрывается.", "Fields whose names contain “password” or “пароль”, regardless of case, are hidden by default. Use the eye icon to reveal a value; collapsing the card hides it again."),
       t("Enter сохраняет карточку; Tab и Shift+Tab перемещаются по значениям, пропуская кнопки и названия полей. Shift+Enter вставляет новую строку.", "Enter saves the card. Tab and Shift+Tab move between values, skipping buttons and field names. Shift+Enter inserts a new line."),
     ]);
     addSection(t("Копирование и блокировка", "Clipboard and locking"), [
@@ -873,6 +874,15 @@ class PasswordBoardView extends ItemView {
   }
 
   render() {
+    const previousColumnsEl = this.columnsEl;
+    const columnsScrollLeft = previousColumnsEl?.isConnected ? previousColumnsEl.scrollLeft : 0;
+    const laneScrollTops = new Map();
+    if (previousColumnsEl?.isConnected) {
+      for (const lane of previousColumnsEl.querySelectorAll(".vkp-lane")) {
+        const items = lane.querySelector(".vkp-lane-items");
+        if (items) laneScrollTops.set(lane.dataset.categoryId, items.scrollTop);
+      }
+    }
     this.columnSortable?.destroy();
     this.columnSortable = null;
     this.destroyCardSortables();
@@ -935,6 +945,12 @@ class PasswordBoardView extends ItemView {
     board.appendChild(this.columnsEl);
     this.contentEl.appendChild(board);
     this.renderColumns();
+    this.columnsEl.scrollLeft = columnsScrollLeft;
+    for (const lane of this.columnsEl.querySelectorAll(".vkp-lane")) {
+      const scrollTop = laneScrollTops.get(lane.dataset.categoryId);
+      const items = lane.querySelector(".vkp-lane-items");
+      if (items && scrollTop !== undefined) items.scrollTop = scrollTop;
+    }
     this.columnSortable = Sortable.create(this.columnsEl, {
       animation: 220,
       draggable: ".vkp-lane-wrapper[data-category-id]",
