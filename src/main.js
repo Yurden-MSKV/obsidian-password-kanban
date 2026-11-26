@@ -815,7 +815,7 @@ class HelpModal extends Modal {
 
     addSection(t("Доска и карточки", "Board and cards"), [
       t("Добавляйте аккаунты в нужную колонку. Карточка раскрывается нажатием на её название.", "Add accounts to the appropriate column. Click a card title to expand it."),
-      t("Перетаскивайте карточки внутри колонки, чтобы изменить порядок, или в другую колонку, чтобы сменить категорию. Беритесь за ручку в заголовке колонки, чтобы менять порядок колонок; ручка в редакторе меняет порядок полей.", "Drag cards within a column to reorder them or to another column to change their category. Use the grip in a column header to reorder columns and the editor grip to reorder fields."),
+      t("Беритесь за ручку на карточке, чтобы менять её порядок в колонке или переносить в другую категорию. Ручки в заголовках колонок и редакторе меняют порядок колонок и полей.", "Use a card's grip to reorder it within a column or move it to another category. Grips in column headers and the editor reorder columns and fields."),
       t("Страница менеджера закрыта при запуске Obsidian. Откройте её значком Password Kanban на левой панели; если хранилище заблокировано, введите мастер-пароль прямо на странице.", "The manager page stays closed when Obsidian starts. Open it from the Password Kanban icon in the left ribbon; when locked, enter the master password directly on the page."),
       t("Поиск работает по названию карточки и значениям полей, пока хранилище разблокировано.", "Search matches card titles and field values while the vault is unlocked."),
     ]);
@@ -854,6 +854,7 @@ class PasswordBoardView extends ItemView {
     this.expandedEntryId = null;
     this.revealedPasswords = new Set();
     this.columnSortable = null;
+    this.cardSortables = new Map();
     this.gateMode = this.plugin.pendingGateMode || null;
   }
 
@@ -879,6 +880,7 @@ class PasswordBoardView extends ItemView {
   onClose() {
     this.columnSortable?.destroy();
     this.columnSortable = null;
+    this.destroyCardSortables();
     this.contentEl.replaceChildren();
     this.expandedEntryId = null;
     this.revealedPasswords.clear();
@@ -896,6 +898,7 @@ class PasswordBoardView extends ItemView {
   render() {
     this.columnSortable?.destroy();
     this.columnSortable = null;
+    this.destroyCardSortables();
     this.contentEl.replaceChildren();
     if (!this.plugin.db || !this.plugin.key) {
       this.renderGate();
@@ -1058,6 +1061,7 @@ class PasswordBoardView extends ItemView {
 
   renderColumns() {
     if (!this.columnsEl || !this.plugin.db) return;
+    this.destroyCardSortables();
     const columnsScrollLeft = this.columnsEl.scrollLeft;
     const laneScrollTops = new Map();
     for (const lane of this.columnsEl.querySelectorAll(".vkp-lane")) {
@@ -1094,32 +1098,8 @@ class PasswordBoardView extends ItemView {
       makeIconButton(controls, "trash-2", t("Удалить категорию", "Delete category"), () => this.deleteCategory(category), "vkp-icon-button vkp-danger");
       header.append(titleWrap, controls);
       column.appendChild(header);
-      column.addEventListener("dragenter", (event) => {
-        event.preventDefault();
-        column.classList.add("is-dropping");
-      });
-      column.addEventListener("dragover", (event) => event.preventDefault());
-      column.addEventListener("dragleave", (event) => {
-        if (!column.contains(event.relatedTarget)) column.classList.remove("is-dropping");
-      });
-      column.addEventListener("drop", async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        column.classList.remove("is-dropping");
-        const entryId = event.dataTransfer?.getData("text/plain");
-        if (entryId) await this.moveEntryToDropPosition(entryId, category.id);
-      });
       const items = makeEl("div", "vkp-lane-items");
-      items.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-      });
-      items.addEventListener("drop", async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const entryId = event.dataTransfer?.getData("text/plain");
-        if (entryId) await this.moveEntryToDropPosition(entryId, category.id);
-      });
+      items.dataset.categoryId = category.id;
       for (const entry of entries) items.appendChild(this.renderEntry(entry));
       column.appendChild(items);
       const add = makeEl("div", "vkp-lane-add");
@@ -1140,6 +1120,99 @@ class PasswordBoardView extends ItemView {
       const scrollTop = laneScrollTops.get(lane.dataset.categoryId);
       if (items && scrollTop !== undefined) items.scrollTop = scrollTop;
     }
+    this.createCardSortables();
+  }
+
+  destroyCardSortables() {
+    for (const sortable of this.cardSortables.values()) sortable.destroy();
+    this.cardSortables.clear();
+  }
+
+  createCardSortables() {
+    for (const items of this.columnsEl.querySelectorAll(".vkp-lane-items")) {
+      const categoryId = items.dataset.categoryId;
+      const sortable = Sortable.create(items, {
+        group: { name: "password-kanban-cards", pull: true, put: true },
+        animation: 180,
+        draggable: ".vkp-card",
+        handle: ".vkp-card-grip",
+        direction: "vertical",
+        forceFallback: true,
+        fallbackOnBody: true,
+        fallbackTolerance: 4,
+        fallbackClass: "vkp-card-sort-fallback",
+        ghostClass: "vkp-card-sort-ghost",
+        chosenClass: "vkp-sort-chosen",
+        dragClass: "vkp-sort-drag",
+        disabled: Boolean(this.query),
+        onEnd: (event) => this.persistCardOrder(event),
+      });
+      this.cardSortables.set(categoryId, sortable);
+    }
+  }
+
+  persistCardOrder(event) {
+    const database = this.plugin.db;
+    if (!database || !this.columnsEl) return;
+
+    const previousEntries = database.entries.slice();
+    const oldCategoryById = new Map(previousEntries.map((entry) => [entry.id, entry.categoryId]));
+    const positionsByCategory = new Map();
+    previousEntries.forEach((entry, index) => {
+      const categoryId = oldCategoryById.get(entry.id);
+      if (!positionsByCategory.has(categoryId)) positionsByCategory.set(categoryId, []);
+      positionsByCategory.get(categoryId).push(index);
+    });
+
+    const entryById = new Map(previousEntries.map((entry) => [entry.id, entry]));
+    const orderedByCategory = new Map();
+    const visibleCategoryIds = new Set();
+    for (const items of this.columnsEl.querySelectorAll(".vkp-lane-items")) {
+      const categoryId = items.dataset.categoryId;
+      visibleCategoryIds.add(categoryId);
+      const orderedEntries = [...items.children]
+        .filter((card) => card.matches(".vkp-card[data-entry-id]"))
+        .map((card) => entryById.get(card.dataset.entryId))
+        .filter(Boolean);
+      for (const entry of orderedEntries) entry.categoryId = categoryId;
+      orderedByCategory.set(categoryId, orderedEntries);
+      const count = items.closest(".vkp-lane")?.querySelector(".vkp-lane-count");
+      if (count) count.textContent = String(orderedEntries.length);
+    }
+
+    for (const category of database.categories) {
+      if (visibleCategoryIds.has(category.id)) continue;
+      orderedByCategory.set(
+        category.id,
+        previousEntries.filter((entry) => oldCategoryById.get(entry.id) === category.id),
+      );
+    }
+
+    const hasChanges = database.categories.some((category) => {
+      const before = previousEntries
+        .filter((entry) => oldCategoryById.get(entry.id) === category.id)
+        .map((entry) => entry.id);
+      const after = (orderedByCategory.get(category.id) || []).map((entry) => entry.id);
+      return before.length !== after.length || before.some((id, index) => id !== after[index]);
+    });
+    if (!hasChanges) return;
+
+    const movedEntry = entryById.get(event.item?.dataset.entryId);
+    if (movedEntry) movedEntry.updatedAt = Date.now();
+
+    const orderedSlots = Array(previousEntries.length).fill(null);
+    const appendedEntries = [];
+    for (const category of database.categories) {
+      const orderedEntries = orderedByCategory.get(category.id) || [];
+      const slots = positionsByCategory.get(category.id) || [];
+      const retainedCount = Math.min(orderedEntries.length, slots.length);
+      for (let index = 0; index < retainedCount; index++) {
+        orderedSlots[slots[index]] = orderedEntries[index];
+      }
+      appendedEntries.push(...orderedEntries.slice(retainedCount));
+    }
+    database.entries = [...orderedSlots.filter(Boolean), ...appendedEntries];
+    void this.plugin.saveAndNotify();
   }
 
   persistCategoryOrder() {
@@ -1164,31 +1237,7 @@ class PasswordBoardView extends ItemView {
 
   renderEntry(entry) {
     const card = makeEl("article", `vkp-card${this.expandedEntryId === entry.id ? " is-expanded" : ""}`);
-    card.draggable = true;
-    card.addEventListener("dragstart", (event) => {
-      if (!event.dataTransfer) return;
-      event.dataTransfer.setData("text/plain", entry.id);
-      event.dataTransfer.effectAllowed = "move";
-    });
-    card.addEventListener("dragenter", () => card.classList.add("is-drop-target"));
-    card.addEventListener("dragleave", (event) => {
-      if (!card.contains(event.relatedTarget)) card.classList.remove("is-drop-target");
-    });
-    card.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-    });
-    card.addEventListener("drop", async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      card.classList.remove("is-drop-target");
-      const draggedEntryId = event.dataTransfer?.getData("text/plain");
-      if (!draggedEntryId || draggedEntryId === entry.id) return;
-      const bounds = card.getBoundingClientRect();
-      const insertAfter = event.clientY >= bounds.top + bounds.height / 2;
-      await this.moveEntryToDropPosition(draggedEntryId, entry.categoryId, entry.id, insertAfter);
-    });
-    card.addEventListener("dragend", () => card.classList.remove("is-drop-target"));
+    card.dataset.entryId = entry.id;
     const heading = makeEl("div", "vkp-card-heading");
     const name = makeEl("button", "vkp-card-title", entry.title);
     name.addEventListener("click", () => {
@@ -1196,10 +1245,23 @@ class PasswordBoardView extends ItemView {
       this.expandedEntryId = this.expandedEntryId === entry.id ? null : entry.id;
       this.renderColumns();
     });
+    const titleWrap = makeEl("div", "vkp-card-title-wrap");
+    const cardGrip = makeIconButton(
+      titleWrap,
+      "grip-vertical",
+      this.query
+        ? t("Очистите поиск, чтобы менять порядок карточек", "Clear search to reorder cards")
+        : t("Перетащить карточку", "Drag card"),
+      () => {},
+      "vkp-icon-button vkp-card-grip",
+    );
+    cardGrip.disabled = Boolean(this.query);
+    if (this.query) cardGrip.classList.add("is-sort-disabled");
+    titleWrap.appendChild(name);
     const actions = makeEl("div", "vkp-card-actions");
     makeIconButton(actions, "pencil", t("Изменить карточку", "Edit card"), () => this.editEntry(entry), "vkp-icon-button");
     makeIconButton(actions, "trash-2", t("Удалить карточку", "Delete card"), () => this.deleteEntry(entry), "vkp-icon-button vkp-danger");
-    heading.append(name, actions);
+    heading.append(titleWrap, actions);
     card.appendChild(heading);
     if (this.expandedEntryId === entry.id) {
       const details = makeEl("div", "vkp-details");
@@ -1233,50 +1295,6 @@ class PasswordBoardView extends ItemView {
       card.appendChild(details);
     }
     return card;
-  }
-
-  async moveEntryToDropPosition(entryId, categoryId, targetEntryId = null, insertAfter = false) {
-    const entries = this.plugin.db?.entries;
-    if (!entries) return;
-    const draggedEntry = entries.find((item) => item.id === entryId);
-    const targetEntry = targetEntryId
-      ? entries.find((item) => item.id === targetEntryId)
-      : null;
-    if (!draggedEntry || (targetEntryId && !targetEntry) || draggedEntry === targetEntry) return;
-
-    const destinationCategoryId = targetEntry?.categoryId ?? categoryId;
-    const destinationEntries = entries.filter(
-      (item) => item.categoryId === destinationCategoryId && item.id !== draggedEntry.id,
-    );
-    if (targetEntry) {
-      const targetIndex = destinationEntries.findIndex((item) => item.id === targetEntry.id);
-      if (targetIndex < 0) return;
-      destinationEntries.splice(targetIndex + (insertAfter ? 1 : 0), 0, draggedEntry);
-    } else {
-      destinationEntries.push(draggedEntry);
-    }
-
-    const oldDestinationOrder = entries
-      .filter((item) => item.categoryId === destinationCategoryId)
-      .map((item) => item.id);
-    const newDestinationOrder = destinationEntries.map((item) => item.id);
-    if (
-      draggedEntry.categoryId === destinationCategoryId &&
-      oldDestinationOrder.length === newDestinationOrder.length &&
-      oldDestinationOrder.every((id, index) => id === newDestinationOrder[index])
-    ) {
-      return;
-    }
-
-    draggedEntry.categoryId = destinationCategoryId;
-    draggedEntry.updatedAt = Date.now();
-    let nextDestinationIndex = 0;
-    this.plugin.db.entries = entries.map((item) => (
-      item.categoryId === destinationCategoryId
-        ? destinationEntries[nextDestinationIndex++]
-        : item
-    ));
-    await this.commitAndRender();
   }
 
   async addCategory() {

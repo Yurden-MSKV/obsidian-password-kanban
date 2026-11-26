@@ -1620,7 +1620,7 @@ var HelpModal = class extends Modal {
     };
     addSection(t("\u0414\u043E\u0441\u043A\u0430 \u0438 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438", "Board and cards"), [
       t("\u0414\u043E\u0431\u0430\u0432\u043B\u044F\u0439\u0442\u0435 \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u044B \u0432 \u043D\u0443\u0436\u043D\u0443\u044E \u043A\u043E\u043B\u043E\u043D\u043A\u0443. \u041A\u0430\u0440\u0442\u043E\u0447\u043A\u0430 \u0440\u0430\u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043D\u0430\u0436\u0430\u0442\u0438\u0435\u043C \u043D\u0430 \u0435\u0451 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435.", "Add accounts to the appropriate column. Click a card title to expand it."),
-      t("\u041F\u0435\u0440\u0435\u0442\u0430\u0441\u043A\u0438\u0432\u0430\u0439\u0442\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0432\u043D\u0443\u0442\u0440\u0438 \u043A\u043E\u043B\u043E\u043D\u043A\u0438, \u0447\u0442\u043E\u0431\u044B \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u0440\u044F\u0434\u043E\u043A, \u0438\u043B\u0438 \u0432 \u0434\u0440\u0443\u0433\u0443\u044E \u043A\u043E\u043B\u043E\u043D\u043A\u0443, \u0447\u0442\u043E\u0431\u044B \u0441\u043C\u0435\u043D\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E. \u0411\u0435\u0440\u0438\u0442\u0435\u0441\u044C \u0437\u0430 \u0440\u0443\u0447\u043A\u0443 \u0432 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0438, \u0447\u0442\u043E\u0431\u044B \u043C\u0435\u043D\u044F\u0442\u044C \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043A\u043E\u043B\u043E\u043D\u043E\u043A; \u0440\u0443\u0447\u043A\u0430 \u0432 \u0440\u0435\u0434\u0430\u043A\u0442\u043E\u0440\u0435 \u043C\u0435\u043D\u044F\u0435\u0442 \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043F\u043E\u043B\u0435\u0439.", "Drag cards within a column to reorder them or to another column to change their category. Use the grip in a column header to reorder columns and the editor grip to reorder fields."),
+      t("\u0411\u0435\u0440\u0438\u0442\u0435\u0441\u044C \u0437\u0430 \u0440\u0443\u0447\u043A\u0443 \u043D\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0435, \u0447\u0442\u043E\u0431\u044B \u043C\u0435\u043D\u044F\u0442\u044C \u0435\u0451 \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u0432 \u043A\u043E\u043B\u043E\u043D\u043A\u0435 \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u043D\u043E\u0441\u0438\u0442\u044C \u0432 \u0434\u0440\u0443\u0433\u0443\u044E \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E. \u0420\u0443\u0447\u043A\u0438 \u0432 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0430\u0445 \u043A\u043E\u043B\u043E\u043D\u043E\u043A \u0438 \u0440\u0435\u0434\u0430\u043A\u0442\u043E\u0440\u0435 \u043C\u0435\u043D\u044F\u044E\u0442 \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043A\u043E\u043B\u043E\u043D\u043E\u043A \u0438 \u043F\u043E\u043B\u0435\u0439.", "Use a card's grip to reorder it within a column or move it to another category. Grips in column headers and the editor reorder columns and fields."),
       t("\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440\u0430 \u0437\u0430\u043A\u0440\u044B\u0442\u0430 \u043F\u0440\u0438 \u0437\u0430\u043F\u0443\u0441\u043A\u0435 Obsidian. \u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0435\u0451 \u0437\u043D\u0430\u0447\u043A\u043E\u043C Password Kanban \u043D\u0430 \u043B\u0435\u0432\u043E\u0439 \u043F\u0430\u043D\u0435\u043B\u0438; \u0435\u0441\u043B\u0438 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043E, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C \u043F\u0440\u044F\u043C\u043E \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435.", "The manager page stays closed when Obsidian starts. Open it from the Password Kanban icon in the left ribbon; when locked, enter the master password directly on the page."),
       t("\u041F\u043E\u0438\u0441\u043A \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0438 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F\u043C \u043F\u043E\u043B\u0435\u0439, \u043F\u043E\u043A\u0430 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043E.", "Search matches card titles and field values while the vault is unlocked.")
     ]);
@@ -1657,6 +1657,7 @@ var PasswordBoardView = class extends ItemView {
     this.expandedEntryId = null;
     this.revealedPasswords = /* @__PURE__ */ new Set();
     this.columnSortable = null;
+    this.cardSortables = /* @__PURE__ */ new Map();
     this.gateMode = this.plugin.pendingGateMode || null;
   }
   getViewType() {
@@ -1677,6 +1678,7 @@ var PasswordBoardView = class extends ItemView {
   onClose() {
     this.columnSortable?.destroy();
     this.columnSortable = null;
+    this.destroyCardSortables();
     this.contentEl.replaceChildren();
     this.expandedEntryId = null;
     this.revealedPasswords.clear();
@@ -1692,6 +1694,7 @@ var PasswordBoardView = class extends ItemView {
   render() {
     this.columnSortable?.destroy();
     this.columnSortable = null;
+    this.destroyCardSortables();
     this.contentEl.replaceChildren();
     if (!this.plugin.db || !this.plugin.key) {
       this.renderGate();
@@ -1839,6 +1842,7 @@ var PasswordBoardView = class extends ItemView {
   }
   renderColumns() {
     if (!this.columnsEl || !this.plugin.db) return;
+    this.destroyCardSortables();
     const columnsScrollLeft = this.columnsEl.scrollLeft;
     const laneScrollTops = /* @__PURE__ */ new Map();
     for (const lane of this.columnsEl.querySelectorAll(".vkp-lane")) {
@@ -1876,32 +1880,8 @@ var PasswordBoardView = class extends ItemView {
       makeIconButton(controls, "trash-2", t("\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E", "Delete category"), () => this.deleteCategory(category), "vkp-icon-button vkp-danger");
       header.append(titleWrap, controls);
       column.appendChild(header);
-      column.addEventListener("dragenter", (event) => {
-        event.preventDefault();
-        column.classList.add("is-dropping");
-      });
-      column.addEventListener("dragover", (event) => event.preventDefault());
-      column.addEventListener("dragleave", (event) => {
-        if (!column.contains(event.relatedTarget)) column.classList.remove("is-dropping");
-      });
-      column.addEventListener("drop", async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        column.classList.remove("is-dropping");
-        const entryId = event.dataTransfer?.getData("text/plain");
-        if (entryId) await this.moveEntryToDropPosition(entryId, category.id);
-      });
       const items = makeEl("div", "vkp-lane-items");
-      items.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-      });
-      items.addEventListener("drop", async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const entryId = event.dataTransfer?.getData("text/plain");
-        if (entryId) await this.moveEntryToDropPosition(entryId, category.id);
-      });
+      items.dataset.categoryId = category.id;
       for (const entry of entries) items.appendChild(this.renderEntry(entry));
       column.appendChild(items);
       const add = makeEl("div", "vkp-lane-add");
@@ -1921,6 +1901,85 @@ var PasswordBoardView = class extends ItemView {
       const scrollTop = laneScrollTops.get(lane.dataset.categoryId);
       if (items && scrollTop !== void 0) items.scrollTop = scrollTop;
     }
+    this.createCardSortables();
+  }
+  destroyCardSortables() {
+    for (const sortable of this.cardSortables.values()) sortable.destroy();
+    this.cardSortables.clear();
+  }
+  createCardSortables() {
+    for (const items of this.columnsEl.querySelectorAll(".vkp-lane-items")) {
+      const categoryId = items.dataset.categoryId;
+      const sortable = Sortable.create(items, {
+        group: { name: "password-kanban-cards", pull: true, put: true },
+        animation: 180,
+        draggable: ".vkp-card",
+        handle: ".vkp-card-grip",
+        direction: "vertical",
+        forceFallback: true,
+        fallbackOnBody: true,
+        fallbackTolerance: 4,
+        fallbackClass: "vkp-card-sort-fallback",
+        ghostClass: "vkp-card-sort-ghost",
+        chosenClass: "vkp-sort-chosen",
+        dragClass: "vkp-sort-drag",
+        disabled: Boolean(this.query),
+        onEnd: (event) => this.persistCardOrder(event)
+      });
+      this.cardSortables.set(categoryId, sortable);
+    }
+  }
+  persistCardOrder(event) {
+    const database = this.plugin.db;
+    if (!database || !this.columnsEl) return;
+    const previousEntries = database.entries.slice();
+    const oldCategoryById = new Map(previousEntries.map((entry) => [entry.id, entry.categoryId]));
+    const positionsByCategory = /* @__PURE__ */ new Map();
+    previousEntries.forEach((entry, index) => {
+      const categoryId = oldCategoryById.get(entry.id);
+      if (!positionsByCategory.has(categoryId)) positionsByCategory.set(categoryId, []);
+      positionsByCategory.get(categoryId).push(index);
+    });
+    const entryById = new Map(previousEntries.map((entry) => [entry.id, entry]));
+    const orderedByCategory = /* @__PURE__ */ new Map();
+    const visibleCategoryIds = /* @__PURE__ */ new Set();
+    for (const items of this.columnsEl.querySelectorAll(".vkp-lane-items")) {
+      const categoryId = items.dataset.categoryId;
+      visibleCategoryIds.add(categoryId);
+      const orderedEntries = [...items.children].filter((card) => card.matches(".vkp-card[data-entry-id]")).map((card) => entryById.get(card.dataset.entryId)).filter(Boolean);
+      for (const entry of orderedEntries) entry.categoryId = categoryId;
+      orderedByCategory.set(categoryId, orderedEntries);
+      const count = items.closest(".vkp-lane")?.querySelector(".vkp-lane-count");
+      if (count) count.textContent = String(orderedEntries.length);
+    }
+    for (const category of database.categories) {
+      if (visibleCategoryIds.has(category.id)) continue;
+      orderedByCategory.set(
+        category.id,
+        previousEntries.filter((entry) => oldCategoryById.get(entry.id) === category.id)
+      );
+    }
+    const hasChanges = database.categories.some((category) => {
+      const before = previousEntries.filter((entry) => oldCategoryById.get(entry.id) === category.id).map((entry) => entry.id);
+      const after = (orderedByCategory.get(category.id) || []).map((entry) => entry.id);
+      return before.length !== after.length || before.some((id, index) => id !== after[index]);
+    });
+    if (!hasChanges) return;
+    const movedEntry = entryById.get(event.item?.dataset.entryId);
+    if (movedEntry) movedEntry.updatedAt = Date.now();
+    const orderedSlots = Array(previousEntries.length).fill(null);
+    const appendedEntries = [];
+    for (const category of database.categories) {
+      const orderedEntries = orderedByCategory.get(category.id) || [];
+      const slots = positionsByCategory.get(category.id) || [];
+      const retainedCount = Math.min(orderedEntries.length, slots.length);
+      for (let index = 0; index < retainedCount; index++) {
+        orderedSlots[slots[index]] = orderedEntries[index];
+      }
+      appendedEntries.push(...orderedEntries.slice(retainedCount));
+    }
+    database.entries = [...orderedSlots.filter(Boolean), ...appendedEntries];
+    void this.plugin.saveAndNotify();
   }
   persistCategoryOrder() {
     if (!this.plugin.db || !this.columnsEl) return;
@@ -1937,31 +1996,7 @@ var PasswordBoardView = class extends ItemView {
   }
   renderEntry(entry) {
     const card = makeEl("article", `vkp-card${this.expandedEntryId === entry.id ? " is-expanded" : ""}`);
-    card.draggable = true;
-    card.addEventListener("dragstart", (event) => {
-      if (!event.dataTransfer) return;
-      event.dataTransfer.setData("text/plain", entry.id);
-      event.dataTransfer.effectAllowed = "move";
-    });
-    card.addEventListener("dragenter", () => card.classList.add("is-drop-target"));
-    card.addEventListener("dragleave", (event) => {
-      if (!card.contains(event.relatedTarget)) card.classList.remove("is-drop-target");
-    });
-    card.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-    });
-    card.addEventListener("drop", async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      card.classList.remove("is-drop-target");
-      const draggedEntryId = event.dataTransfer?.getData("text/plain");
-      if (!draggedEntryId || draggedEntryId === entry.id) return;
-      const bounds = card.getBoundingClientRect();
-      const insertAfter = event.clientY >= bounds.top + bounds.height / 2;
-      await this.moveEntryToDropPosition(draggedEntryId, entry.categoryId, entry.id, insertAfter);
-    });
-    card.addEventListener("dragend", () => card.classList.remove("is-drop-target"));
+    card.dataset.entryId = entry.id;
     const heading = makeEl("div", "vkp-card-heading");
     const name = makeEl("button", "vkp-card-title", entry.title);
     name.addEventListener("click", () => {
@@ -1969,10 +2004,22 @@ var PasswordBoardView = class extends ItemView {
       this.expandedEntryId = this.expandedEntryId === entry.id ? null : entry.id;
       this.renderColumns();
     });
+    const titleWrap = makeEl("div", "vkp-card-title-wrap");
+    const cardGrip = makeIconButton(
+      titleWrap,
+      "grip-vertical",
+      this.query ? t("\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u0435 \u043F\u043E\u0438\u0441\u043A, \u0447\u0442\u043E\u0431\u044B \u043C\u0435\u043D\u044F\u0442\u044C \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043A\u0430\u0440\u0442\u043E\u0447\u0435\u043A", "Clear search to reorder cards") : t("\u041F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u044C \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443", "Drag card"),
+      () => {
+      },
+      "vkp-icon-button vkp-card-grip"
+    );
+    cardGrip.disabled = Boolean(this.query);
+    if (this.query) cardGrip.classList.add("is-sort-disabled");
+    titleWrap.appendChild(name);
     const actions = makeEl("div", "vkp-card-actions");
     makeIconButton(actions, "pencil", t("\u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443", "Edit card"), () => this.editEntry(entry), "vkp-icon-button");
     makeIconButton(actions, "trash-2", t("\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443", "Delete card"), () => this.deleteEntry(entry), "vkp-icon-button vkp-danger");
-    heading.append(name, actions);
+    heading.append(titleWrap, actions);
     card.appendChild(heading);
     if (this.expandedEntryId === entry.id) {
       const details = makeEl("div", "vkp-details");
@@ -2006,34 +2053,6 @@ var PasswordBoardView = class extends ItemView {
       card.appendChild(details);
     }
     return card;
-  }
-  async moveEntryToDropPosition(entryId, categoryId, targetEntryId = null, insertAfter = false) {
-    const entries = this.plugin.db?.entries;
-    if (!entries) return;
-    const draggedEntry = entries.find((item) => item.id === entryId);
-    const targetEntry = targetEntryId ? entries.find((item) => item.id === targetEntryId) : null;
-    if (!draggedEntry || targetEntryId && !targetEntry || draggedEntry === targetEntry) return;
-    const destinationCategoryId = targetEntry?.categoryId ?? categoryId;
-    const destinationEntries = entries.filter(
-      (item) => item.categoryId === destinationCategoryId && item.id !== draggedEntry.id
-    );
-    if (targetEntry) {
-      const targetIndex = destinationEntries.findIndex((item) => item.id === targetEntry.id);
-      if (targetIndex < 0) return;
-      destinationEntries.splice(targetIndex + (insertAfter ? 1 : 0), 0, draggedEntry);
-    } else {
-      destinationEntries.push(draggedEntry);
-    }
-    const oldDestinationOrder = entries.filter((item) => item.categoryId === destinationCategoryId).map((item) => item.id);
-    const newDestinationOrder = destinationEntries.map((item) => item.id);
-    if (draggedEntry.categoryId === destinationCategoryId && oldDestinationOrder.length === newDestinationOrder.length && oldDestinationOrder.every((id, index) => id === newDestinationOrder[index])) {
-      return;
-    }
-    draggedEntry.categoryId = destinationCategoryId;
-    draggedEntry.updatedAt = Date.now();
-    let nextDestinationIndex = 0;
-    this.plugin.db.entries = entries.map((item) => item.categoryId === destinationCategoryId ? destinationEntries[nextDestinationIndex++] : item);
-    await this.commitAndRender();
   }
   async addCategory() {
     new TextPromptModal(this.app, t("\u041D\u043E\u0432\u0430\u044F \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F", "New category"), "", async (name) => {

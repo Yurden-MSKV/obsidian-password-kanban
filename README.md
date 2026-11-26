@@ -8,7 +8,7 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 
 ## Features
 
-- Drag cards to reorder them within a column or move them between categories.
+- Use a card's grip to reorder it within a column or move it between categories.
 - Drag a column's grip to reorder columns; drag field grips in the editor to reorder fields.
 - Expand cards inline; add and rename custom fields per card.
 - Search, a password generator, and one-click field copying.
@@ -47,7 +47,7 @@ Requires Node.js and npm. Run `npm ci` followed by `npm run build`. SortableJS 1
 
 ### Возможности
 
-- Перетаскивайте карточки, чтобы менять их порядок в колонке или перемещать между категориями.
+- Беритесь за ручку карточки, чтобы менять её порядок в колонке или перемещать между категориями.
 - Перетаскивайте колонку за ручку в её заголовке, чтобы менять порядок колонок; в редакторе перетаскивайте поля за ручки.
 - Просмотр карточек без открытия отдельного окна; добавление и переименование полей.
 - Поиск, генератор паролей и копирование значений полей.
