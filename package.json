@@ -1,0 +1,27 @@
+{
+  "name": "obsidian-password-kanban",
+  "version": "0.2.24",
+  "private": true,
+  "description": "Build tooling for the Password Kanban Obsidian plugin.",
+  "main": "main.js",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --platform=browser --format=cjs --external:obsidian --target=es2020 --outfile=main.js",
+    "check": "npm run build && node --check main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yurden-MSKV/obsidian-password-kanban.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Yurden-MSKV/obsidian-password-kanban/issues"
+  },
+  "homepage": "https://github.com/Yurden-MSKV/obsidian-password-kanban#readme",
+  "dependencies": {
+    "sortablejs": "1.15.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

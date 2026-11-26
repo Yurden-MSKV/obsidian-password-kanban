@@ -158,6 +158,49 @@
   gap: 2px;
 }
 
+.vkp-lane-grip {
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;
+}
+
+.vkp-lane-grip:active {
+  cursor: grabbing;
+}
+
+.vkp-lane-wrapper.vkp-lane-sort-ghost {
+  opacity: 0.34;
+  outline: 2px dashed var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+.vkp-field-edit-row.vkp-field-sort-ghost {
+  opacity: 0.32;
+  border: 2px dashed var(--interactive-accent);
+  border-radius: var(--radius-s);
+  background: hsla(var(--interactive-accent-hsl), 0.12);
+}
+
+.vkp-sort-chosen {
+  box-shadow: var(--shadow-m);
+}
+
+.vkp-field-sort-fallback,
+.vkp-lane-sort-fallback {
+  z-index: 2147483647;
+  opacity: 0.96;
+  pointer-events: none;
+  transform: rotate(0.5deg) scale(1.01);
+  border: 2px solid var(--interactive-accent);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  box-shadow: var(--shadow-l);
+}
+
+.vkp-field-sort-fallback {
+  font-family: var(--font-interface-override, var(--font-interface-theme, var(--font-interface, var(--font-default, sans-serif))));
+}
+
 .vkp-icon-button {
   display: inline-flex;
   align-items: center;
@@ -467,6 +510,7 @@
 }
 
 .vkp-field-edit-row {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(100px, 0.8fr) minmax(140px, 1.4fr) 36px 112px 36px;
   align-items: start;
@@ -499,14 +543,6 @@
 .vkp-field-grip svg {
   width: var(--icon-size, 1em);
   height: var(--icon-size, 1em);
-}
-
-.vkp-field-edit-row.is-dragging {
-  opacity: 0.55;
-}
-
-.vkp-field-edit-row.is-drop-target {
-  border-block-start: 2px solid var(--interactive-accent);
 }
 
 .vkp-field-edit-row .vkp-small {
