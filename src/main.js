@@ -6,7 +6,6 @@ const CONFLICT_DIR = ".password-kanban-conflicts";
 const VIEW_TYPE = "password-kanban-view";
 const KDF_ITERATIONS = 600000;
 const AUTO_LOCK_MS = 5 * 60 * 1000;
-const CLIPBOARD_CLEAR_MS = 2 * 60 * 1000;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const UI_LANGUAGE = (getLanguage?.() || "ru").toLowerCase().startsWith("en") ? "en" : "ru";
@@ -175,8 +174,6 @@ class PasswordKanbanPlugin extends Plugin {
     this.editingModeTimer = null;
     this.editingMode = false;
     this.pendingGateMode = null;
-    this.clipboardTimer = null;
-    this.clipboardSequence = 0;
     this.saveQueue = Promise.resolve();
 
     this.registerView(VIEW_TYPE, (leaf) => new PasswordBoardView(leaf, this));
@@ -221,8 +218,6 @@ class PasswordKanbanPlugin extends Plugin {
     this.conflictRecoveryModal?.close();
     window.clearTimeout(this.lockTimer);
     window.clearTimeout(this.editingModeTimer);
-    window.clearTimeout(this.clipboardTimer);
-    this.clipboardSequence++;
     this.boardView = null;
     this.db = null;
     this.key = null;
@@ -238,27 +233,9 @@ class PasswordKanbanPlugin extends Plugin {
       return;
     }
 
-    const sequence = ++this.clipboardSequence;
-    window.clearTimeout(this.clipboardTimer);
-    this.clipboardTimer = window.setTimeout(async () => {
-      if (sequence !== this.clipboardSequence) return;
-      try {
-        const currentValue = await navigator.clipboard.readText();
-        if (sequence !== this.clipboardSequence) return;
-        if (currentValue === value) {
-          await navigator.clipboard.writeText("");
-          new Notice(t("Скопированное значение удалено из буфера обмена.", "Copied value cleared from the clipboard."));
-        }
-      } catch {
-        new Notice(t("Не удалось очистить буфер автоматически. Очистите его вручную.", "Could not clear the clipboard automatically. Please clear it manually."));
-      } finally {
-        if (sequence === this.clipboardSequence) this.clipboardTimer = null;
-      }
-    }, CLIPBOARD_CLEAR_MS);
-
     new Notice(t(
-      "Скопировано: {label}. Очистка через 2 минуты, если значение останется в буфере.",
-      "Copied: {label}. It will be cleared in 2 minutes if it is still on the clipboard.",
+      "Скопировано: {label}.",
+      "Copied: {label}.",
       { label },
     ));
   }
@@ -630,7 +607,7 @@ class EntryEditorModal extends Modal {
     generate.title = t("Сгенерировать пароль (11–15 символов)", "Generate password (11–15 characters)");
     const updateGeneratorVisibility = () => {
       const fieldName = label.value.trim().toLocaleLowerCase();
-      const available = fieldName === "пароль" || fieldName === "password";
+      const available = fieldName.includes("пароль") || fieldName.includes("password");
       generate.disabled = !available;
       generate.classList.toggle("is-placeholder", !available);
       generate.setAttribute("aria-hidden", String(!available));
@@ -821,12 +798,12 @@ class HelpModal extends Modal {
     ]);
     addSection(t("Поля и генератор", "Fields and generator"), [
       t("В новых карточках поле «Сайт» идёт первым. Поля можно добавлять, переименовывать и менять их порядок отдельно в каждой карточке.", "New cards start with the Website field. Add, rename, and reorder fields independently in each card."),
-      t("Генератор доступен только для поля «Пароль». Он создаёт 11–15 латинских букв и цифр без распространённых визуально похожих символов.", "The generator is available only for the Password field. It creates 11–15 Latin letters and digits, excluding commonly confused characters."),
+      t("Кнопка генератора доступна, если название поля содержит «пароль» или «password» (без учёта регистра). Генератор создаёт 11–15 латинских букв и цифр без распространённых визуально похожих символов.", "The generator button is available when a field name contains “password” or “пароль”, regardless of case. It creates 11–15 Latin letters and digits, excluding commonly confused characters."),
       t("Поле «Пароль» скрыто по умолчанию. Нажмите на значок глаза, чтобы показать его; при сворачивании карточки пароль снова скрывается.", "Password fields are hidden by default. Use the eye icon to reveal one; collapsing the card hides it again."),
       t("Enter сохраняет карточку; Tab и Shift+Tab перемещаются по значениям, пропуская кнопки и названия полей. Shift+Enter вставляет новую строку.", "Enter saves the card. Tab and Shift+Tab move between values, skipping buttons and field names. Shift+Enter inserts a new line."),
     ]);
     addSection(t("Копирование и блокировка", "Clipboard and locking"), [
-      t("После копирования плагин через 2 минуты попытается очистить буфер, но только если там осталось то же значение. Если доступ к буферу запрещён, значение изменилось или Obsidian закрыт, очистка не выполняется.", "Two minutes after copying, the plugin tries to clear the clipboard only if the copied value is still there. It leaves the clipboard untouched if access is denied or its contents changed; the timer does not run after Obsidian closes."),
+      t("Скопированные значения остаются в буфере обмена, пока вы не замените или не очистите их вручную.", "Copied values remain on the clipboard until you replace or clear them manually."),
       t("Хранилище блокируется при потере фокуса Obsidian или после 5 минут бездействия. В режиме редактирования блокировка при потере фокуса отключена, а таймер на 5 минут обновляется при действиях в Obsidian; если действий нет, хранилище блокируется. При блокировке открытая карточка скрывается; несохранённые изменения редактора теряются.", "The vault locks when Obsidian loses focus or after 5 minutes of inactivity. Editing mode disables focus-loss locking; its 5-minute timer resets whenever you interact with Obsidian and locks the vault after 5 minutes without activity. The open card is hidden; unsaved editor changes are discarded."),
       t("Мастер-пароль запрашивается при запуске Obsidian и нигде не сохраняется.", "The master password is requested when Obsidian starts and is never stored."),
     ]);

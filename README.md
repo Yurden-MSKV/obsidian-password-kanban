@@ -11,10 +11,10 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 - Use a card's grip to reorder it within a column or move it between categories.
 - Drag a column's grip to reorder columns; drag field grips in the editor to reorder fields.
 - Expand cards inline; add and rename custom fields per card.
-- Search, a password generator, and one-click field copying.
+- Search, one-click field copying, and a password generator available when a field name contains “password” or “пароль” (case-insensitive).
 - Password fields are masked by default and can be revealed on demand.
 - The vault locks when Obsidian loses focus or after five minutes of inactivity. Temporary Editing mode disables focus-loss locking and resets its five-minute lock timer whenever you interact with Obsidian.
-- Clipboard contents are cleared after two minutes when the copied value is still present.
+- Copied values remain on the clipboard until replaced or cleared manually.
 - The manager page stays closed at vault startup and opens from the left ribbon icon. When locked, enter the master password directly on the page.
 
 ## Installation
@@ -28,8 +28,6 @@ This plugin is installed in `.obsidian/plugins/password-kanban`. Enable **Passwo
 - Passwords and card data are not written to Markdown, and the master password is not stored.
 - A forgotten master password cannot be recovered.
 - The plugin has not received an independent security audit. It protects the vault file at rest, but cannot protect against malware running on an unlocked device.
-
-Clipboard cleanup checks that the clipboard still contains the copied value before clearing it. If Obsidian cannot read the clipboard, or its contents changed, it leaves the clipboard untouched and shows a notice. The timer does not run after Obsidian closes.
 
 ## Sync and limitations
 
@@ -50,10 +48,10 @@ Requires Node.js and npm. Run `npm ci` followed by `npm run build`. SortableJS 1
 - Беритесь за ручку карточки, чтобы менять её порядок в колонке или перемещать между категориями.
 - Перетаскивайте колонку за ручку в её заголовке, чтобы менять порядок колонок; в редакторе перетаскивайте поля за ручки.
 - Просмотр карточек без открытия отдельного окна; добавление и переименование полей.
-- Поиск, генератор паролей и копирование значений полей.
+- Поиск, копирование значений полей и генератор, доступный для названий, содержащих «пароль» или «password» (без учёта регистра).
 - Пароли скрыты по умолчанию и отображаются по запросу.
 - Хранилище блокируется при потере фокуса Obsidian или после пяти минут бездействия. Временный режим редактирования отключает блокировку при потере фокуса и обновляет таймер блокировки на пять минут при каждом действии в Obsidian.
-- Через две минуты плагин очищает буфер обмена, если скопированное значение всё ещё находится в нём.
+- Скопированные значения остаются в буфере обмена, пока вы не замените или не очистите их вручную.
 - При запуске vault страница менеджера закрыта. Откройте её значком Password Kanban на левой панели; если хранилище заблокировано, введите мастер-пароль прямо на странице.
 
 ### Установка
