@@ -1037,6 +1037,7 @@ var PasswordKanbanPlugin = class extends Plugin {
     this.lockTimer = null;
     this.editingModeTimer = null;
     this.editingMode = false;
+    this.pendingGateMode = null;
     this.clipboardTimer = null;
     this.clipboardSequence = 0;
     this.saveQueue = Promise.resolve();
@@ -1119,13 +1120,17 @@ var PasswordKanbanPlugin = class extends Plugin {
   }
   async openGate() {
     if (this.db && this.key) {
-      this.openBoard();
+      await this.openBoard();
       return;
     }
     const adapter = this.app.vault.adapter;
     const exists = await adapter.exists(DB_PATH);
-    if (exists) new UnlockModal(this.app, this).open();
-    else new SetupModal(this.app, this).open();
+    this.pendingGateMode = exists ? "unlock" : "setup";
+    try {
+      await this.openBoard(this.pendingGateMode);
+    } finally {
+      this.pendingGateMode = null;
+    }
   }
   async createVault(password) {
     if (!globalThis.crypto?.subtle) throw new Error(t("\u0412 \u044D\u0442\u043E\u0439 \u0432\u0435\u0440\u0441\u0438\u0438 Obsidian \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430 Web Crypto API.", "Web Crypto API is unavailable in this version of Obsidian."));
@@ -1133,8 +1138,23 @@ var PasswordKanbanPlugin = class extends Plugin {
     this.key = await deriveKey(password, this.salt, KDF_ITERATIONS);
     this.db = newDatabase();
     this.diskFingerprint = null;
-    const saved = await this.persist();
-    if (!saved) throw new Error(t("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u043D\u0443\u044E \u0431\u0430\u0437\u0443.", "Could not create the encrypted database."));
+    let saved = false;
+    try {
+      saved = await this.persist();
+    } catch (error) {
+      this.db = null;
+      this.key = null;
+      this.salt = null;
+      this.diskFingerprint = null;
+      throw error;
+    }
+    if (!saved) {
+      this.db = null;
+      this.key = null;
+      this.salt = null;
+      this.diskFingerprint = null;
+      throw new Error(t("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u043D\u0443\u044E \u0431\u0430\u0437\u0443.", "Could not create the encrypted database."));
+    }
     this.resetLockTimer();
   }
   async unlockVault(password) {
@@ -1237,8 +1257,7 @@ var PasswordKanbanPlugin = class extends Plugin {
       return false;
     }
   }
-  async openBoard() {
-    if (!this.db || !this.key) return;
+  async openBoard(gateMode = null) {
     let leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
     if (!leaf) {
       leaf = this.app.workspace.getLeaf("tab");
@@ -1246,8 +1265,9 @@ var PasswordKanbanPlugin = class extends Plugin {
     }
     this.app.workspace.revealLeaf(leaf);
     this.boardView = leaf.view;
+    this.boardView.gateMode = this.db && this.key ? null : gateMode || this.pendingGateMode || this.boardView.gateMode || "unlock";
     this.boardView?.render();
-    this.resetLockTimer();
+    if (this.db && this.key) this.resetLockTimer();
   }
   resetLockTimer() {
     if (!this.db || !this.key) return;
@@ -1300,6 +1320,7 @@ var PasswordKanbanPlugin = class extends Plugin {
     this.entryEditorModal?.close();
     this.conflictRecoveryModal?.close();
     if (this.boardView) {
+      this.boardView.gateMode = "unlock";
       this.boardView.expandedEntryId = null;
       this.boardView.revealedPasswords.clear();
       this.boardView.render();
@@ -1311,8 +1332,8 @@ var PasswordKanbanPlugin = class extends Plugin {
   async openConflictRecovery() {
     if (!this.db || !this.key) {
       new Notice(t(
-        "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0437\u043D\u0430\u0447\u043E\u043A Password Kanban \u043D\u0430 \u043B\u0435\u0432\u043E\u0439 \u043F\u0430\u043D\u0435\u043B\u0438, \u0447\u0442\u043E\u0431\u044B \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435.",
-        "Click the Password Kanban icon in the left ribbon to unlock the vault."
+        "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0437\u043D\u0430\u0447\u043E\u043A Password Kanban \u0441\u043B\u0435\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443, \u0437\u0430\u0442\u0435\u043C \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C.",
+        "Click the Password Kanban icon in the left ribbon to open the page, then enter your master password."
       ));
       return;
     }
@@ -1374,82 +1395,6 @@ var PasswordKanbanPlugin = class extends Plugin {
     await this.app.vault.adapter.remove(path);
     new Notice(t("\u041A\u043E\u043F\u0438\u044F \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u0430. \u0417\u0430\u043F\u0438\u0441\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u0441 \u043F\u043E\u043C\u0435\u0442\u043A\u043E\u0439 \xAB\u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E\xBB.", "Conflict copy restored. Recovered entries were added with \u201Crestored\u201D in their titles."));
     this.openBoard();
-  }
-};
-var SetupModal = class extends Modal {
-  constructor(app, plugin) {
-    super(app);
-    this.plugin = plugin;
-  }
-  onOpen() {
-    this.modalEl.classList.add("vkp-shell");
-    this.contentEl.replaceChildren();
-    this.contentEl.appendChild(makeEl("h2", "", t("\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u043D\u043E\u0435 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435", "Create encrypted vault")));
-    this.contentEl.appendChild(makeEl("p", "vkp-muted", t(
-      "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C. \u041E\u043D \u043D\u0435 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442\u0441\u044F \u0432 vault; \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u0435\u0433\u043E \u043D\u0435\u043B\u044C\u0437\u044F.",
-      "Set a master password. It is never stored in the vault and cannot be recovered."
-    )));
-    const password = makeEl("input", "vkp-input");
-    password.type = "password";
-    password.autocomplete = "new-password";
-    password.placeholder = t("\u041C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C (\u043D\u0435 \u043C\u0435\u043D\u0435\u0435 12 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)", "Master password (at least 12 characters)");
-    const confirm = makeEl("input", "vkp-input");
-    confirm.type = "password";
-    confirm.autocomplete = "new-password";
-    confirm.placeholder = t("\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C", "Confirm master password");
-    const error = makeEl("div", "vkp-error");
-    this.contentEl.append(password, confirm, error);
-    makeButton(this.contentEl, t("\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435", "Create vault"), async () => {
-      error.textContent = "";
-      if (password.value.length < 12) {
-        error.textContent = t("\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C \u0434\u043B\u0438\u043D\u043E\u0439 \u043D\u0435 \u043C\u0435\u043D\u0435\u0435 12 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432.", "Use a master password with at least 12 characters.");
-        return;
-      }
-      if (password.value !== confirm.value) {
-        error.textContent = t("\u041F\u0430\u0440\u043E\u043B\u0438 \u043D\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0430\u044E\u0442.", "Passwords do not match.");
-        return;
-      }
-      try {
-        await this.plugin.createVault(password.value);
-        this.close();
-        this.plugin.openBoard();
-      } catch (e) {
-        error.textContent = e.message;
-      }
-    }, "mod-cta");
-    password.focus();
-  }
-};
-var UnlockModal = class extends Modal {
-  constructor(app, plugin) {
-    super(app);
-    this.plugin = plugin;
-  }
-  onOpen() {
-    this.modalEl.classList.add("vkp-shell");
-    this.contentEl.replaceChildren();
-    this.contentEl.appendChild(makeEl("h2", "", t("\u0420\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C Password Kanban", "Unlock Password Kanban")));
-    const password = makeEl("input", "vkp-input");
-    password.type = "password";
-    password.autocomplete = "current-password";
-    password.placeholder = t("\u041C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C", "Master password");
-    const error = makeEl("div", "vkp-error");
-    this.contentEl.append(password, error);
-    makeButton(this.contentEl, t("\u0420\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", "Unlock"), async () => {
-      error.textContent = "";
-      try {
-        await this.plugin.unlockVault(password.value);
-        this.close();
-        this.plugin.openBoard();
-      } catch {
-        error.textContent = t("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0431\u0430\u0437\u0443. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C \u0438\u043B\u0438 \u0446\u0435\u043B\u043E\u0441\u0442\u043D\u043E\u0441\u0442\u044C \u0444\u0430\u0439\u043B\u0430.", "Could not open the database. Check the master password or file integrity.");
-        password.select();
-      }
-    }, "mod-cta");
-    password.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") this.contentEl.querySelector("button")?.click();
-    });
-    password.focus();
   }
 };
 var TextPromptModal = class extends Modal {
@@ -1676,7 +1621,7 @@ var HelpModal = class extends Modal {
     addSection(t("\u0414\u043E\u0441\u043A\u0430 \u0438 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438", "Board and cards"), [
       t("\u0414\u043E\u0431\u0430\u0432\u043B\u044F\u0439\u0442\u0435 \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u044B \u0432 \u043D\u0443\u0436\u043D\u0443\u044E \u043A\u043E\u043B\u043E\u043D\u043A\u0443. \u041A\u0430\u0440\u0442\u043E\u0447\u043A\u0430 \u0440\u0430\u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043D\u0430\u0436\u0430\u0442\u0438\u0435\u043C \u043D\u0430 \u0435\u0451 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435.", "Add accounts to the appropriate column. Click a card title to expand it."),
       t("\u041F\u0435\u0440\u0435\u0442\u0430\u0441\u043A\u0438\u0432\u0430\u0439\u0442\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0432\u043D\u0443\u0442\u0440\u0438 \u043A\u043E\u043B\u043E\u043D\u043A\u0438, \u0447\u0442\u043E\u0431\u044B \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u0440\u044F\u0434\u043E\u043A, \u0438\u043B\u0438 \u0432 \u0434\u0440\u0443\u0433\u0443\u044E \u043A\u043E\u043B\u043E\u043D\u043A\u0443, \u0447\u0442\u043E\u0431\u044B \u0441\u043C\u0435\u043D\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E. \u0411\u0435\u0440\u0438\u0442\u0435\u0441\u044C \u0437\u0430 \u0440\u0443\u0447\u043A\u0443 \u0432 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0438, \u0447\u0442\u043E\u0431\u044B \u043C\u0435\u043D\u044F\u0442\u044C \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043A\u043E\u043B\u043E\u043D\u043E\u043A; \u0440\u0443\u0447\u043A\u0430 \u0432 \u0440\u0435\u0434\u0430\u043A\u0442\u043E\u0440\u0435 \u043C\u0435\u043D\u044F\u0435\u0442 \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043F\u043E\u043B\u0435\u0439.", "Drag cards within a column to reorder them or to another column to change their category. Use the grip in a column header to reorder columns and the editor grip to reorder fields."),
-      t("\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440\u0430 \u0437\u0430\u043A\u0440\u044B\u0442\u0430 \u043F\u0440\u0438 \u0437\u0430\u043F\u0443\u0441\u043A\u0435 Obsidian. \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0437\u043D\u0430\u0447\u043E\u043A Password Kanban \u043D\u0430 \u043B\u0435\u0432\u043E\u0439 \u043F\u0430\u043D\u0435\u043B\u0438, \u0447\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0435\u0451 \u0438 \u0437\u0430\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C.", "The manager page stays closed when Obsidian starts. Click the Password Kanban icon in the left ribbon to open it and enter the master password."),
+      t("\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440\u0430 \u0437\u0430\u043A\u0440\u044B\u0442\u0430 \u043F\u0440\u0438 \u0437\u0430\u043F\u0443\u0441\u043A\u0435 Obsidian. \u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0435\u0451 \u0437\u043D\u0430\u0447\u043A\u043E\u043C Password Kanban \u043D\u0430 \u043B\u0435\u0432\u043E\u0439 \u043F\u0430\u043D\u0435\u043B\u0438; \u0435\u0441\u043B\u0438 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043E, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C \u043F\u0440\u044F\u043C\u043E \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435.", "The manager page stays closed when Obsidian starts. Open it from the Password Kanban icon in the left ribbon; when locked, enter the master password directly on the page."),
       t("\u041F\u043E\u0438\u0441\u043A \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0438 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F\u043C \u043F\u043E\u043B\u0435\u0439, \u043F\u043E\u043A\u0430 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043E.", "Search matches card titles and field values while the vault is unlocked.")
     ]);
     addSection(t("\u041F\u043E\u043B\u044F \u0438 \u0433\u0435\u043D\u0435\u0440\u0430\u0442\u043E\u0440", "Fields and generator"), [
@@ -1712,6 +1657,7 @@ var PasswordBoardView = class extends ItemView {
     this.expandedEntryId = null;
     this.revealedPasswords = /* @__PURE__ */ new Set();
     this.columnSortable = null;
+    this.gateMode = this.plugin.pendingGateMode || null;
   }
   getViewType() {
     return VIEW_TYPE;
@@ -1748,15 +1694,10 @@ var PasswordBoardView = class extends ItemView {
     this.columnSortable = null;
     this.contentEl.replaceChildren();
     if (!this.plugin.db || !this.plugin.key) {
-      const locked = makeEl("div", "vkp-locked");
-      locked.appendChild(makeEl("h2", "", t("Password Kanban \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D", "Password Kanban is locked")));
-      locked.appendChild(makeEl("p", "vkp-muted", t(
-        "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0437\u043D\u0430\u0447\u043E\u043A Password Kanban \u043D\u0430 \u043B\u0435\u0432\u043E\u0439 \u043F\u0430\u043D\u0435\u043B\u0438, \u0447\u0442\u043E\u0431\u044B \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435.",
-        "Click the Password Kanban icon in the left ribbon to unlock the vault."
-      )));
-      this.contentEl.appendChild(locked);
+      this.renderGate();
       return;
     }
+    this.gateMode = null;
     const board = makeEl("div", "vkp-kanban");
     const toolbar = makeEl("div", "vkp-toolbar");
     const search = makeEl("input", "vkp-input vkp-search");
@@ -1789,7 +1730,20 @@ var PasswordBoardView = class extends ItemView {
       () => this.plugin.toggleEditingMode(),
       "vkp-toolbar-button"
     );
-    makeButton(toolbar, t("\u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", "Lock"), () => this.plugin.lock(true), "vkp-toolbar-button");
+    let pointerLockFallback = null;
+    const lockButton = makeButton(toolbar, t("\u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", "Lock"), () => {
+      if (pointerLockFallback !== null) window.clearTimeout(pointerLockFallback);
+      pointerLockFallback = null;
+      this.plugin.lock(true);
+    }, "vkp-toolbar-button");
+    lockButton.addEventListener("pointerup", (event) => {
+      if (event.button !== 0) return;
+      if (pointerLockFallback !== null) window.clearTimeout(pointerLockFallback);
+      pointerLockFallback = window.setTimeout(() => {
+        pointerLockFallback = null;
+        if (this.plugin.db && this.plugin.key) this.plugin.lock(true);
+      }, 0);
+    });
     makeIconButton(toolbar, "circle-help", t("\u0421\u043F\u0440\u0430\u0432\u043A\u0430 Password Kanban", "Password Kanban help"), () => this.plugin.openHelp(), "vkp-toolbar-help");
     board.appendChild(toolbar);
     this.columnsEl = makeEl("div", "vkp-columns");
@@ -1810,6 +1764,78 @@ var PasswordBoardView = class extends ItemView {
       dragClass: "vkp-sort-drag",
       onEnd: () => this.persistCategoryOrder()
     });
+  }
+  renderGate() {
+    const isSetup = this.gateMode === "setup";
+    const locked = makeEl("div", "vkp-locked");
+    locked.appendChild(makeEl("h2", "", isSetup ? t("\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u043D\u043E\u0435 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435", "Create encrypted vault") : t("Password Kanban \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D", "Password Kanban is locked")));
+    locked.appendChild(makeEl("p", "vkp-muted", isSetup ? t("\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C. \u041E\u043D \u043D\u0435 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442\u0441\u044F \u0432 vault, \u0438 \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u0435\u0433\u043E \u043D\u0435\u043B\u044C\u0437\u044F.", "Set a master password. It is never stored in the vault and cannot be recovered.") : t("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C, \u0447\u0442\u043E\u0431\u044B \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435.", "Enter your master password to unlock the vault.")));
+    const form = makeEl("div", `vkp-locked-form${isSetup ? " vkp-setup-form" : ""}`);
+    const password = makeEl("input", "vkp-input");
+    password.type = "password";
+    password.autocomplete = isSetup ? "new-password" : "current-password";
+    password.autocapitalize = "off";
+    password.spellcheck = false;
+    password.placeholder = isSetup ? t("\u041C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C (\u043D\u0435 \u043C\u0435\u043D\u0435\u0435 12 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)", "Master password (at least 12 characters)") : t("\u041C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C", "Master password");
+    form.appendChild(password);
+    let confirm = null;
+    if (isSetup) {
+      confirm = makeEl("input", "vkp-input");
+      confirm.type = "password";
+      confirm.autocomplete = "new-password";
+      confirm.autocapitalize = "off";
+      confirm.spellcheck = false;
+      confirm.placeholder = t("\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C", "Confirm master password");
+      form.appendChild(confirm);
+    }
+    const error = makeEl("div", "vkp-error");
+    let submitButton;
+    const submit = async () => {
+      error.textContent = "";
+      if (isSetup && password.value.length < 12) {
+        error.textContent = t(
+          "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C \u0434\u043B\u0438\u043D\u043E\u0439 \u043D\u0435 \u043C\u0435\u043D\u0435\u0435 12 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432.",
+          "Use a master password with at least 12 characters."
+        );
+        password.focus();
+        return;
+      }
+      if (isSetup && password.value !== confirm.value) {
+        error.textContent = t("\u041F\u0430\u0440\u043E\u043B\u0438 \u043D\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0430\u044E\u0442.", "Passwords do not match.");
+        confirm.select();
+        return;
+      }
+      submitButton.disabled = true;
+      try {
+        if (isSetup) await this.plugin.createVault(password.value);
+        else await this.plugin.unlockVault(password.value);
+        this.gateMode = null;
+        await this.plugin.openBoard();
+      } catch (e) {
+        error.textContent = isSetup ? e.message || t("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435.", "Could not create the vault.") : t(
+          "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0431\u0430\u0437\u0443. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043C\u0430\u0441\u0442\u0435\u0440-\u043F\u0430\u0440\u043E\u043B\u044C \u0438\u043B\u0438 \u0446\u0435\u043B\u043E\u0441\u0442\u043D\u043E\u0441\u0442\u044C \u0444\u0430\u0439\u043B\u0430.",
+          "Could not open the database. Check the master password or file integrity."
+        );
+        password.select();
+      } finally {
+        if (submitButton.isConnected) submitButton.disabled = false;
+      }
+    };
+    const submitOnEnter = (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      void submit();
+    };
+    password.addEventListener("keydown", submitOnEnter);
+    confirm?.addEventListener("keydown", submitOnEnter);
+    submitButton = makeButton(
+      form,
+      isSetup ? t("\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435", "Create vault") : t("\u0420\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", "Unlock"),
+      () => void submit(),
+      "mod-cta"
+    );
+    locked.append(form, error);
+    this.contentEl.appendChild(locked);
   }
   renderColumns() {
     if (!this.columnsEl || !this.plugin.db) return;

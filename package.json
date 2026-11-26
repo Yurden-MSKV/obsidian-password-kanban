@@ -1,6 +1,6 @@
 {
   "name": "obsidian-password-kanban",
-  "version": "0.2.24",
+  "version": "0.2.27",
   "private": true,
   "description": "Build tooling for the Password Kanban Obsidian plugin.",
   "main": "main.js",

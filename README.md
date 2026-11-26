@@ -15,7 +15,7 @@ An encrypted, category-based password manager that opens as an Obsidian Kanban-s
 - Password fields are masked by default and can be revealed on demand.
 - The vault locks when Obsidian loses focus or after five minutes of inactivity. Temporary Editing mode disables focus-loss locking and resets its five-minute lock timer whenever you interact with Obsidian.
 - Clipboard contents are cleared after two minutes when the copied value is still present.
-- The manager page stays closed at vault startup and opens from the left ribbon icon.
+- The manager page stays closed at vault startup and opens from the left ribbon icon. When locked, enter the master password directly on the page.
 
 ## Installation
 
@@ -54,7 +54,7 @@ Requires Node.js and npm. Run `npm ci` followed by `npm run build`. SortableJS 1
 - Пароли скрыты по умолчанию и отображаются по запросу.
 - Хранилище блокируется при потере фокуса Obsidian или после пяти минут бездействия. Временный режим редактирования отключает блокировку при потере фокуса и обновляет таймер блокировки на пять минут при каждом действии в Obsidian.
 - Через две минуты плагин очищает буфер обмена, если скопированное значение всё ещё находится в нём.
-- При запуске vault страница менеджера закрыта. Нажмите значок Password Kanban на левой панели, чтобы открыть её и ввести мастер-пароль.
+- При запуске vault страница менеджера закрыта. Откройте её значком Password Kanban на левой панели; если хранилище заблокировано, введите мастер-пароль прямо на странице.
 
 ### Установка
 

@@ -174,6 +174,7 @@ class PasswordKanbanPlugin extends Plugin {
     this.lockTimer = null;
     this.editingModeTimer = null;
     this.editingMode = false;
+    this.pendingGateMode = null;
     this.clipboardTimer = null;
     this.clipboardSequence = 0;
     this.saveQueue = Promise.resolve();
@@ -264,13 +265,17 @@ class PasswordKanbanPlugin extends Plugin {
 
   async openGate() {
     if (this.db && this.key) {
-      this.openBoard();
+      await this.openBoard();
       return;
     }
     const adapter = this.app.vault.adapter;
     const exists = await adapter.exists(DB_PATH);
-    if (exists) new UnlockModal(this.app, this).open();
-    else new SetupModal(this.app, this).open();
+    this.pendingGateMode = exists ? "unlock" : "setup";
+    try {
+      await this.openBoard(this.pendingGateMode);
+    } finally {
+      this.pendingGateMode = null;
+    }
   }
 
   async createVault(password) {
@@ -279,8 +284,23 @@ class PasswordKanbanPlugin extends Plugin {
     this.key = await deriveKey(password, this.salt, KDF_ITERATIONS);
     this.db = newDatabase();
     this.diskFingerprint = null;
-    const saved = await this.persist();
-    if (!saved) throw new Error(t("Не удалось создать зашифрованную базу.", "Could not create the encrypted database."));
+    let saved = false;
+    try {
+      saved = await this.persist();
+    } catch (error) {
+      this.db = null;
+      this.key = null;
+      this.salt = null;
+      this.diskFingerprint = null;
+      throw error;
+    }
+    if (!saved) {
+      this.db = null;
+      this.key = null;
+      this.salt = null;
+      this.diskFingerprint = null;
+      throw new Error(t("Не удалось создать зашифрованную базу.", "Could not create the encrypted database."));
+    }
     this.resetLockTimer();
   }
 
@@ -395,8 +415,7 @@ class PasswordKanbanPlugin extends Plugin {
     }
   }
 
-  async openBoard() {
-    if (!this.db || !this.key) return;
+  async openBoard(gateMode = null) {
     let leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
     if (!leaf) {
       leaf = this.app.workspace.getLeaf("tab");
@@ -404,8 +423,11 @@ class PasswordKanbanPlugin extends Plugin {
     }
     this.app.workspace.revealLeaf(leaf);
     this.boardView = leaf.view;
+    this.boardView.gateMode = this.db && this.key
+      ? null
+      : (gateMode || this.pendingGateMode || this.boardView.gateMode || "unlock");
     this.boardView?.render();
-    this.resetLockTimer();
+    if (this.db && this.key) this.resetLockTimer();
   }
 
   resetLockTimer() {
@@ -463,6 +485,7 @@ class PasswordKanbanPlugin extends Plugin {
     this.entryEditorModal?.close();
     this.conflictRecoveryModal?.close();
     if (this.boardView) {
+      this.boardView.gateMode = "unlock";
       this.boardView.expandedEntryId = null;
       this.boardView.revealedPasswords.clear();
       this.boardView.render();
@@ -477,8 +500,8 @@ class PasswordKanbanPlugin extends Plugin {
   async openConflictRecovery() {
     if (!this.db || !this.key) {
       new Notice(t(
-        "Нажмите значок Password Kanban на левой панели, чтобы разблокировать хранилище.",
-        "Click the Password Kanban icon in the left ribbon to unlock the vault.",
+        "Нажмите значок Password Kanban слева, чтобы открыть страницу, затем введите мастер-пароль.",
+        "Click the Password Kanban icon in the left ribbon to open the page, then enter your master password.",
       ));
       return;
     }
@@ -545,88 +568,6 @@ class PasswordKanbanPlugin extends Plugin {
     new Notice(t("Копия восстановлена. Записи добавлены с пометкой «восстановлено».", "Conflict copy restored. Recovered entries were added with “restored” in their titles."));
     this.openBoard();
   }
-}
-
-class SetupModal extends Modal {
-  constructor(app, plugin) {
-    super(app);
-    this.plugin = plugin;
-  }
-
-  onOpen() {
-    this.modalEl.classList.add("vkp-shell");
-    this.contentEl.replaceChildren();
-    this.contentEl.appendChild(makeEl("h2", "", t("Создать зашифрованное хранилище", "Create encrypted vault")));
-    this.contentEl.appendChild(makeEl("p", "vkp-muted", t(
-      "Задайте мастер-пароль. Он не сохраняется в vault; восстановить его нельзя.",
-      "Set a master password. It is never stored in the vault and cannot be recovered.",
-    )));
-    const password = makeEl("input", "vkp-input");
-    password.type = "password";
-    password.autocomplete = "new-password";
-    password.placeholder = t("Мастер-пароль (не менее 12 символов)", "Master password (at least 12 characters)");
-    const confirm = makeEl("input", "vkp-input");
-    confirm.type = "password";
-    confirm.autocomplete = "new-password";
-    confirm.placeholder = t("Повторите мастер-пароль", "Confirm master password");
-    const error = makeEl("div", "vkp-error");
-    this.contentEl.append(password, confirm, error);
-    makeButton(this.contentEl, t("Создать хранилище", "Create vault"), async () => {
-      error.textContent = "";
-      if (password.value.length < 12) {
-        error.textContent = t("Используйте мастер-пароль длиной не менее 12 символов.", "Use a master password with at least 12 characters.");
-        return;
-      }
-      if (password.value !== confirm.value) {
-        error.textContent = t("Пароли не совпадают.", "Passwords do not match.");
-        return;
-      }
-      try {
-        await this.plugin.createVault(password.value);
-        this.close();
-        this.plugin.openBoard();
-      } catch (e) {
-        error.textContent = e.message;
-      }
-    }, "mod-cta");
-    password.focus();
-  }
-
-}
-
-class UnlockModal extends Modal {
-  constructor(app, plugin) {
-    super(app);
-    this.plugin = plugin;
-  }
-
-  onOpen() {
-    this.modalEl.classList.add("vkp-shell");
-    this.contentEl.replaceChildren();
-    this.contentEl.appendChild(makeEl("h2", "", t("Разблокировать Password Kanban", "Unlock Password Kanban")));
-    const password = makeEl("input", "vkp-input");
-    password.type = "password";
-    password.autocomplete = "current-password";
-    password.placeholder = t("Мастер-пароль", "Master password");
-    const error = makeEl("div", "vkp-error");
-    this.contentEl.append(password, error);
-    makeButton(this.contentEl, t("Разблокировать", "Unlock"), async () => {
-      error.textContent = "";
-      try {
-        await this.plugin.unlockVault(password.value);
-        this.close();
-        this.plugin.openBoard();
-      } catch {
-        error.textContent = t("Не удалось открыть базу. Проверьте мастер-пароль или целостность файла.", "Could not open the database. Check the master password or file integrity.");
-        password.select();
-      }
-    }, "mod-cta");
-    password.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") this.contentEl.querySelector("button")?.click();
-    });
-    password.focus();
-  }
-
 }
 
 class TextPromptModal extends Modal {
@@ -875,7 +816,7 @@ class HelpModal extends Modal {
     addSection(t("Доска и карточки", "Board and cards"), [
       t("Добавляйте аккаунты в нужную колонку. Карточка раскрывается нажатием на её название.", "Add accounts to the appropriate column. Click a card title to expand it."),
       t("Перетаскивайте карточки внутри колонки, чтобы изменить порядок, или в другую колонку, чтобы сменить категорию. Беритесь за ручку в заголовке колонки, чтобы менять порядок колонок; ручка в редакторе меняет порядок полей.", "Drag cards within a column to reorder them or to another column to change their category. Use the grip in a column header to reorder columns and the editor grip to reorder fields."),
-      t("Страница менеджера закрыта при запуске Obsidian. Нажмите значок Password Kanban на левой панели, чтобы открыть её и запросить мастер-пароль.", "The manager page stays closed when Obsidian starts. Click the Password Kanban icon in the left ribbon to open it and enter the master password."),
+      t("Страница менеджера закрыта при запуске Obsidian. Откройте её значком Password Kanban на левой панели; если хранилище заблокировано, введите мастер-пароль прямо на странице.", "The manager page stays closed when Obsidian starts. Open it from the Password Kanban icon in the left ribbon; when locked, enter the master password directly on the page."),
       t("Поиск работает по названию карточки и значениям полей, пока хранилище разблокировано.", "Search matches card titles and field values while the vault is unlocked."),
     ]);
     addSection(t("Поля и генератор", "Fields and generator"), [
@@ -913,6 +854,7 @@ class PasswordBoardView extends ItemView {
     this.expandedEntryId = null;
     this.revealedPasswords = new Set();
     this.columnSortable = null;
+    this.gateMode = this.plugin.pendingGateMode || null;
   }
 
   getViewType() {
@@ -956,15 +898,10 @@ class PasswordBoardView extends ItemView {
     this.columnSortable = null;
     this.contentEl.replaceChildren();
     if (!this.plugin.db || !this.plugin.key) {
-      const locked = makeEl("div", "vkp-locked");
-      locked.appendChild(makeEl("h2", "", t("Password Kanban заблокирован", "Password Kanban is locked")));
-      locked.appendChild(makeEl("p", "vkp-muted", t(
-        "Нажмите значок Password Kanban на левой панели, чтобы разблокировать хранилище.",
-        "Click the Password Kanban icon in the left ribbon to unlock the vault.",
-      )));
-      this.contentEl.appendChild(locked);
+      this.renderGate();
       return;
     }
+    this.gateMode = null;
 
     const board = makeEl("div", "vkp-kanban");
     const toolbar = makeEl("div", "vkp-toolbar");
@@ -998,7 +935,20 @@ class PasswordBoardView extends ItemView {
       () => this.plugin.toggleEditingMode(),
       "vkp-toolbar-button",
     );
-    makeButton(toolbar, t("Заблокировать", "Lock"), () => this.plugin.lock(true), "vkp-toolbar-button");
+    let pointerLockFallback = null;
+    const lockButton = makeButton(toolbar, t("Заблокировать", "Lock"), () => {
+      if (pointerLockFallback !== null) window.clearTimeout(pointerLockFallback);
+      pointerLockFallback = null;
+      this.plugin.lock(true);
+    }, "vkp-toolbar-button");
+    lockButton.addEventListener("pointerup", (event) => {
+      if (event.button !== 0) return;
+      if (pointerLockFallback !== null) window.clearTimeout(pointerLockFallback);
+      pointerLockFallback = window.setTimeout(() => {
+        pointerLockFallback = null;
+        if (this.plugin.db && this.plugin.key) this.plugin.lock(true);
+      }, 0);
+    });
     makeIconButton(toolbar, "circle-help", t("Справка Password Kanban", "Password Kanban help"), () => this.plugin.openHelp(), "vkp-toolbar-help");
     board.appendChild(toolbar);
     this.columnsEl = makeEl("div", "vkp-columns");
@@ -1019,6 +969,91 @@ class PasswordBoardView extends ItemView {
       dragClass: "vkp-sort-drag",
       onEnd: () => this.persistCategoryOrder(),
     });
+  }
+
+  renderGate() {
+    const isSetup = this.gateMode === "setup";
+    const locked = makeEl("div", "vkp-locked");
+    locked.appendChild(makeEl("h2", "", isSetup
+      ? t("Создать зашифрованное хранилище", "Create encrypted vault")
+      : t("Password Kanban заблокирован", "Password Kanban is locked")));
+    locked.appendChild(makeEl("p", "vkp-muted", isSetup
+      ? t("Задайте мастер-пароль. Он не сохраняется в vault, и восстановить его нельзя.", "Set a master password. It is never stored in the vault and cannot be recovered.")
+      : t("Введите мастер-пароль, чтобы разблокировать хранилище.", "Enter your master password to unlock the vault.")));
+
+    const form = makeEl("div", `vkp-locked-form${isSetup ? " vkp-setup-form" : ""}`);
+    const password = makeEl("input", "vkp-input");
+    password.type = "password";
+    password.autocomplete = isSetup ? "new-password" : "current-password";
+    password.autocapitalize = "off";
+    password.spellcheck = false;
+    password.placeholder = isSetup
+      ? t("Мастер-пароль (не менее 12 символов)", "Master password (at least 12 characters)")
+      : t("Мастер-пароль", "Master password");
+    form.appendChild(password);
+
+    let confirm = null;
+    if (isSetup) {
+      confirm = makeEl("input", "vkp-input");
+      confirm.type = "password";
+      confirm.autocomplete = "new-password";
+      confirm.autocapitalize = "off";
+      confirm.spellcheck = false;
+      confirm.placeholder = t("Повторите мастер-пароль", "Confirm master password");
+      form.appendChild(confirm);
+    }
+
+    const error = makeEl("div", "vkp-error");
+    let submitButton;
+    const submit = async () => {
+      error.textContent = "";
+      if (isSetup && password.value.length < 12) {
+        error.textContent = t(
+          "Используйте мастер-пароль длиной не менее 12 символов.",
+          "Use a master password with at least 12 characters.",
+        );
+        password.focus();
+        return;
+      }
+      if (isSetup && password.value !== confirm.value) {
+        error.textContent = t("Пароли не совпадают.", "Passwords do not match.");
+        confirm.select();
+        return;
+      }
+
+      submitButton.disabled = true;
+      try {
+        if (isSetup) await this.plugin.createVault(password.value);
+        else await this.plugin.unlockVault(password.value);
+        this.gateMode = null;
+        await this.plugin.openBoard();
+      } catch (e) {
+        error.textContent = isSetup
+          ? e.message || t("Не удалось создать хранилище.", "Could not create the vault.")
+          : t(
+            "Не удалось открыть базу. Проверьте мастер-пароль или целостность файла.",
+            "Could not open the database. Check the master password or file integrity.",
+          );
+        password.select();
+      } finally {
+        if (submitButton.isConnected) submitButton.disabled = false;
+      }
+    };
+    const submitOnEnter = (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      void submit();
+    };
+    password.addEventListener("keydown", submitOnEnter);
+    confirm?.addEventListener("keydown", submitOnEnter);
+    submitButton = makeButton(
+      form,
+      isSetup ? t("Создать хранилище", "Create vault") : t("Разблокировать", "Unlock"),
+      () => void submit(),
+      "mod-cta",
+    );
+    locked.append(form, error);
+    this.contentEl.appendChild(locked);
   }
 
   renderColumns() {

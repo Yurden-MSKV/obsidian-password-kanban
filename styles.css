@@ -409,6 +409,41 @@
   background: var(--background-primary);
 }
 
+.vkp-locked-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, 100%);
+  margin-block-start: 8px;
+}
+
+.vkp-locked-form .vkp-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.vkp-locked-form.vkp-setup-form {
+  align-items: stretch;
+}
+
+.vkp-locked-form button {
+  min-width: 180px;
+  min-height: 36px;
+}
+
+.vkp-setup-form button {
+  align-self: center;
+  min-width: 180px;
+}
+
+.vkp-locked > .vkp-error {
+  width: min(520px, 100%);
+  text-align: center;
+}
+
 .vkp-muted {
   color: var(--text-muted);
   font-size: var(--font-ui-small);
