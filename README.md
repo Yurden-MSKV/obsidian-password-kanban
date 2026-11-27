@@ -77,5 +77,3 @@ Requires Node.js and npm. Run `npm ci` followed by `npm run build`. SortableJS 1
 ## Сборка
 
 Нужны Node.js и npm. Выполните `npm ci`, затем `npm run build`. SortableJS 1.15.7 включается в `main.js`; плагин не загружает его с CDN и не обращается к сети для сортировки. Лицензия сторонней библиотеки: [MIT](THIRD_PARTY_NOTICES.md).
-
-Полная русская документация также доступна в файле `README.ru.md` репозитория.
